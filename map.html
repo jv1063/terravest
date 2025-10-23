@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1724">
+  <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'none';">
+  <title>Project 369 Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Remixicon for lock icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css" crossorigin="">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Poppins', Arial, sans-serif;
+      background: #232526;
+      width: 100vw;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* --- Professional login / hero styles --- */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    #login {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      box-sizing: border-box;
+      background: transparent;
+      color: #e6eef8;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Full-screen background video */
+    .login-bg-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 1;
+      filter: brightness(0.85) contrast(1.15);
+      pointer-events: none;
+      background: #000;
+    }
+
+    /* Ensure video covers entire viewport on all devices */
+    @media (max-width: 768px) {
+      .login-bg-video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        object-position: center;
+      }
+    }
+
+    /* Force video to be visible even if content-type is wrong */
+    .login-bg-video[src] {
+      display: block !important;
+      visibility: visible !important;
+    }
+
+    /* Fallback background image if video fails */
+    .login-bg-fallback {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
+      z-index: -3;
+    }
+
+    /* Cross-browser user selection */
+    .auth-card, .auth-form, .auth-media {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    /* Allow text selection in input fields */
+    input, textarea {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
+
+    /* Dark overlay for better text readability */
+    .login-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(7,16,36,0.35) 0%, rgba(15,23,36,0.45) 100%);
+      z-index: 1;
+    }
+
+    /* Ensure login content stays above video */
+    .auth-container {
+      position: relative;
+      z-index: 2;
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 980px;
+      padding: 28px;
+    }
+
+    .auth-card {
+      display: flex;
+      gap: 36px;
+      align-items: center;
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 12px 40px rgba(2,6,23,0.6);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .auth-brand img {
+      width: 84px;
+      height: auto;
+      display: block;
+    }
+
+    .auth-info {
+      flex: 1 1 auto;
+    }
+
+    h1.login-title {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+    }
+
+    p.login-sub {
+      margin: 8px 0 0 0;
+      color: rgba(230,238,248,0.78);
+      font-size: 0.95rem;
+      line-height: 1.3;
+    }
+
+    .auth-form {
+      width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #passcode {
+      flex: 1 1 auto;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      color: #fff;
+      outline: none;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    #passcode:focus-visible {
+      border-color: #198754;
+      box-shadow: 0 0 0 3px rgba(25,135,84,0.35);
+    }
+
+    #passcode::placeholder { color: rgba(255,255,255,0.6); }
+
+    #login-btn {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(180deg,#0a7a3b,#066533);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(6,122,59,0.12);
+    }
+
+    #login-btn:hover {
+      filter: brightness(1.05);
+    }
+
+    #login-btn:focus-visible {
+      outline: 3px solid rgba(25,135,84,0.6);
+      outline-offset: 2px;
+    }
+
+    #login-btn:active { transform: translateY(1px); }
+
+    #error { color: #ffb4b4; min-height: 20px; font-weight: 600; text-align: left; }
+
+    .auth-foot { margin-top: 12px; font-size: 0.9rem; color: rgba(230,238,248,0.6); }
+
+    /* Responsive adjustments for background video */
+    @media (max-width: 768px) {
+      .login-bg-video {
+        opacity: 1;
+        filter: brightness(0.85) contrast(1.15);
+      }
+      .login-overlay {
+        background: linear-gradient(135deg, rgba(7,16,36,0.35) 0%, rgba(15,23,36,0.45) 100%);
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .login-bg-video {
+        display: none;
+      }
+      #login {
+        background: linear-gradient(180deg, #071024 0%, #0f1724 100%);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .auth-card { flex-direction: column; padding: 20px; gap: 16px; }
+      .auth-form { width: 100%; }
+      .auth-brand img { width: 64px; }
+    }
+    /* Right-side brand media */
+    .auth-media {
+      width: 420px;
+      max-width: 42vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .auth-media video {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(2,6,23,0.6);
+      background: #000;
+    }
+    .brand-title {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+      text-align: center;
+    }
+    .brand-sub {
+      margin: 4px 0 0 0;
+      color: rgba(230,238,248,0.78);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    @media (max-width: 720px) {
+      .auth-media { width: 100%; max-width: none; }
+    }
+  #map {
+    height: 100vh;
+    width: 100vw;
+    display: none;
+    margin-top: 0;
+    touch-action: none;
+  }
+    .zoom-warning {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      z-index: 1200;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    @media screen and (max-width: 600px) {
+      .login-animated {
+        margin-top: 18px;
+        max-height: 22vh;
+      }
+      #login-box {
+        padding: 14px 2vw;
+        max-width: 98vw;
+        margin-bottom: 1.2rem;
+      }
+      #login-title {
+        margin-bottom: 1.2rem;
+        font-size: 1.1rem;
+      }
+      .login__box {
+        padding-inline: 4px;
+      }
+      #login-btn {
+        font-size: 1rem;
+        padding: 13px 0;
+      }
+    }
+    /* Fix Leaflet CSS compatibility issues */
+    .leaflet-overlay-pane svg {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    /* Custom popup styling for longer display time */
+    .custom-popup {
+      animation-duration: 0.3s !important;
+    }
+    
+    .custom-popup .leaflet-popup-content-wrapper {
+      animation: popupFadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes popupFadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    /* Accessibility and motion preferences handled above */
+  </style>
+</head>
+<body>
+
+  <div id="login">
+    <!-- Full-screen background video -->
+    <video class="login-bg-video" autoplay muted loop playsinline webkit-playsinline preload="metadata" disablePictureInPicture>
+      <source src="assets/background_video.mp4" type="video/mp4">
+      <!-- Fallback for browsers that don't support video -->
+    </video>
+    
+    <!-- Fallback background image if video fails -->
+    <div class="login-bg-fallback"></div>
+    
+    <!-- Dark overlay for better readability -->
+    <div class="login-overlay"></div>
+    
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-media" aria-label="Brand video">
+          <video id="brand-video" muted playsinline preload="metadata" disablePictureInPicture translate="no">
+            <source src="assets/terravest_logo_video.mp4" type="video/mp4">
+          </video>
+          <h2 class="brand-title">Terravest Group</h2>
+          <p class="brand-sub">Secure property dashboard — sign in to continue</p>
+        </div>
+        <form class="auth-form" id="auth-form" aria-label="Login form" onsubmit="checkPasscode(event)">
+          <label for="passcode" class="sr-only">Passcode</label>
+          <div class="input-wrap">
+            <input type="password" id="passcode" placeholder="Enter passcode" autocomplete="current-password" aria-describedby="error">
+            <i class="ri-lock-2-fill" aria-hidden="true" style="color:rgba(255,255,255,0.6)"></i>
+          </div>
+          <button id="login-btn" type="submit">Sign in</button>
+          <div id="error" role="status" aria-live="polite"></div>
+          <div class="auth-foot">Need help? Contact support@terravest.example</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+  <div id="zoom-warning" class="zoom-warning">Zoom limit reached</div>
+
+  <noscript>
+    <div style="position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#b91c1c;color:#fff;padding:8px 12px;border-radius:6px;z-index:2000;">
+      JavaScript is required to view the interactive map.
+    </div>
+  </noscript>
+
+  <!-- Embedded fallback copy of properties.geojson (used if fetch fails / file:// cases) -->
+  <script id="properties-embedded" type="application/json">
+{
+"type": "FeatureCollection",
+"name": "properties",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "fid": 1, "Plot size": "2378", "Discription": "Agri/Juni sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.296972433400853, 23.023224996481765 ], [ 72.296978613967795, 23.023325489081458 ], [ 72.296978613967795, 23.023325489081458 ], [ 72.296995095479588, 23.023367202968757 ], [ 72.297015697369318, 23.023386163822355 ], [ 72.297291762691856, 23.023412709012916 ], [ 72.297349447983137, 23.023266710400154 ], [ 72.297380350817747, 23.02313208816259 ], [ 72.29736180911695, 23.023006946243736 ], [ 72.297143429085708, 23.022902661222634 ], [ 72.297141368896732, 23.022906453406634 ], [ 72.297141368896732, 23.022906453406634 ], [ 72.296972433400853, 23.023224996481765 ] ] ] } },
+{ "type": "Feature", "properties": { "fid": 2, "Plot size": "20000", "Discription": "Agriculture/juni sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.289779434938765, 23.043598221647724 ], [ 72.289779434938765, 23.043598221647724 ], [ 72.289732551500833, 23.04206025874711 ], [ 72.290746957620144, 23.04148127739451 ], [ 72.291167670088214, 23.042302297251638 ], [ 72.289779434938765, 23.043598221647724 ] ] ] } },
+{ "type": "Feature", "properties": { "fid": 4, "Plot size": "3500 sq.mtr", "Discription": "Navi sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.404888294315811, 23.024773690511857 ], [ 72.405425057585006, 23.024788481004009 ], [ 72.405553623637502, 23.024247147934521 ], [ 72.40521613774969, 23.024211650608123 ], [ 72.404888294315811, 23.024773690511857 ] ] ] } },
+{ "type": "Feature", "properties": { "fid": 5, "Plot size": "9155 sq.mtr/3.85 vigh", "Discription": "Agri/Juni sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.295975810194307, 23.053203006471481 ], [ 72.295588001113018, 23.053217571339371 ], [ 72.295374310394763, 23.053173876730973 ], [ 72.295291208448788, 23.05232911151456 ], [ 72.294772810595234, 23.052361882677808 ], [ 72.294883613189882, 23.053232136205693 ], [ 72.295128961792329, 23.053199365254265 ], [ 72.295152705205453, 23.053483379901621 ], [ 72.295991639136389, 23.053454250221776 ], [ 72.295975810194307, 23.053203006471481 ] ] ] } },
+{ "type": "Feature", "properties": { "fid": 1, "Plot size": "2378", "Discription": "Agri/Juni sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.296972433400853, 23.023224996481765 ], [ 72.296978613967795, 23.023325489081458 ], [ 72.296978613967795, 23.023325489081458 ], [ 72.296995095479588, 23.023367202968757 ], [ 72.297015697369318, 23.023386163822355 ], [ 72.297291762691856, 23.023412709012916 ], [ 72.297349447983137, 23.023266710400154 ], [ 72.297380350817747, 23.02313208816259 ], [ 72.29736180911695, 23.023006946243736 ], [ 72.297143429085708, 23.022902661222634 ], [ 72.297141368896732, 23.022906453406634 ], [ 72.297141368896732, 23.022906453406634 ], [ 72.296972433400853, 23.023224996481765 ] ] ] } }
+]
+}
+  </script>
+
+  <script>
+  let map;
+  let geojsonLayer;
+  let autoFitOnLoad = true; // auto-fit to geojson only on first load unless user interacts
+  let videoPlayCount = 0; // track how many times video has played
+
+  // Video control - play exactly twice
+  function playVideoOnce() {
+    const video = document.getElementById('brand-video');
+    if (!video || videoPlayCount >= 2) return;
+    
+    videoPlayCount++;
+    video.currentTime = 0;
+    video.play().catch(() => {});
+    
+    // Stop after this play
+    video.addEventListener('ended', function() {
+      video.pause();
+      video.currentTime = 0;
+    }, { once: true });
+  }
+
+  // Play video on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(playVideoOnce, 500); // small delay to ensure video is ready
+    
+    // Debug and force background video to play
+    const bgVideo = document.querySelector('.login-bg-video');
+    if (bgVideo) {
+      console.log('Background video element found:', bgVideo);
+      
+      // Debug indicator removed after confirming video works
+      
+      // Force video to load with proper MIME type
+      bgVideo.type = 'video/mp4';
+      
+      bgVideo.addEventListener('loadstart', () => {
+        console.log('Background video started loading');
+      });
+      
+      bgVideo.addEventListener('loadeddata', () => {
+        console.log('Background video data loaded');
+        console.log('Video dimensions:', bgVideo.videoWidth, 'x', bgVideo.videoHeight);
+      });
+      
+      bgVideo.addEventListener('canplay', () => {
+        console.log('Background video can play');
+        console.log('Video duration:', bgVideo.duration);
+        
+        // Force play with multiple attempts
+        const playVideo = () => {
+          bgVideo.play().then(() => {
+            console.log('Background video playing successfully');
+            console.log('Video current time:', bgVideo.currentTime);
+            // Debug border removal not needed
+          }).catch(e => {
+            console.log('Background video play failed:', e);
+            console.log('Error details:', e.message);
+          });
+        };
+        
+        playVideo();
+        
+        // Try again after user interaction
+        document.addEventListener('click', () => {
+          console.log('User clicked, retrying video play');
+          playVideo();
+        }, { once: true });
+      });
+      
+      bgVideo.addEventListener('error', (e) => {
+        console.error('Background video error:', e);
+        console.log('Video src:', bgVideo.src || bgVideo.querySelector('source')?.src);
+        console.log('Video error details:', bgVideo.error);
+        console.log('Network state:', bgVideo.networkState);
+        console.log('Ready state:', bgVideo.readyState);
+        
+        // Show fallback background
+        document.querySelector('.login-bg-fallback').style.display = 'block';
+      });
+      
+      bgVideo.addEventListener('playing', () => {
+        console.log('Background video is now playing');
+        console.log('Video is actually visible:', bgVideo.offsetWidth, 'x', bgVideo.offsetHeight);
+      });
+      
+      // Test if video file is accessible
+      fetch('assets/background_video.mp4', { method: 'HEAD' })
+        .then(response => {
+          console.log('Background video file accessible:', response.ok);
+          console.log('Video file size:', response.headers.get('content-length'));
+          console.log('Video content-type:', response.headers.get('content-type'));
+        })
+        .catch(err => {
+          console.error('Background video file not accessible:', err);
+        });
+      
+      // Force load the video
+      bgVideo.load();
+      
+      // Multiple play attempts with different strategies
+      setTimeout(() => {
+        bgVideo.play().catch(e => {
+          console.log('Initial play attempt failed:', e);
+          // Try setting currentTime and play again
+          bgVideo.currentTime = 0;
+          setTimeout(() => {
+            bgVideo.play().catch(err => {
+              console.log('Second attempt failed:', err);
+              // Try with different approach
+              bgVideo.muted = true;
+              bgVideo.play().catch(finalErr => console.log('Final attempt failed:', finalErr));
+            });
+          }, 500);
+        });
+      }, 1000);
+    } else {
+      console.error('Background video element not found!');
+    }
+  });
+
+  // === WhatsApp popup helpers ===
+  const WA_NUMBER = '917383727206'; // phone number in international format (no + or 00)
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function getPropertyValue(props, keys) {
+    for (let k of keys) {
+      if (props && Object.prototype.hasOwnProperty.call(props, k) && props[k] != null) return props[k];
+    }
+    return null;
+  }
+
+  function bindWhatsAppPopupToLayer(feature, layer) {
+    const props = feature.properties || {};
+    const fid = getPropertyValue(props, ['fid', 'id', 'FID']) || 'unknown';
+    const title = getPropertyValue(props, ['title', 'Title', 'name', 'Name', 'Discription', 'description']) || 'No title';
+    const price = getPropertyValue(props, ['price', 'Price', 'cost']) || 'Price not set';
+    // Try several common keys for plot/area/size (GeoJSON uses "Plot size" in your file)
+    const area = getPropertyValue(props, ['Plot size', 'plot_size', 'plot size', 'area', 'Area', 'size', 'Size']) || 'N/A';
+
+    const message = `Hi, I'm interested in property ID ${fid}. ${title} ${price}`;
+    const encoded = encodeURIComponent(message);
+    const waLink = `https://wa.me/${WA_NUMBER}?text=${encoded}`;
+
+    // Get coordinates for Google Maps pin
+    const coordinates = getPropertyCoordinates(feature);
+    const googleMapsLink = coordinates ? `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}` : '#';
+
+    const popupHtml = `
+      <div style="min-width:200px;">
+        <div style="font-weight:600;margin-bottom:6px">${escapeHtml(title)}</div>
+        <div style="color:#444;margin-bottom:6px"><strong>Price:</strong> ${escapeHtml(price)}</div>
+        <div style="color:#444;margin-bottom:8px"><strong>Size:</strong> ${escapeHtml(area)}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="${waLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:8px 10px;background:#25D366;color:#fff;border-radius:6px;text-decoration:none;font-size:0.9rem;">
+            📱 WhatsApp
+          </a>
+          <a href="${googleMapsLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:8px 10px;background:#4285F4;color:#fff;border-radius:6px;text-decoration:none;font-size:0.9rem;">
+            📍 Google Maps
+          </a>
+        </div>
+      </div>
+    `.trim();
+
+    layer.bindPopup(popupHtml, {
+      autoClose: false, // Disable auto-close
+      closeOnClick: true,
+      autoPan: true,
+      keepInView: true,
+      className: 'custom-popup',
+      maxWidth: 300,
+      minWidth: 200
+    });
+    
+    // Custom timing: close popup after 8 seconds
+    layer.on('popupopen', function() {
+      setTimeout(() => {
+        if (layer.isPopupOpen()) {
+          layer.closePopup();
+        }
+      }, 8000); // 8 seconds total (5 seconds more than default)
+    });
+  }
+
+  // Helper function to get coordinates from GeoJSON feature
+  function getPropertyCoordinates(feature) {
+    if (!feature.geometry || !feature.geometry.coordinates) return null;
+    
+    let coordinates = null;
+    
+    if (feature.geometry.type === 'Polygon') {
+      // For polygons, get the centroid (center point)
+      const coords = feature.geometry.coordinates[0];
+      let sumLat = 0, sumLng = 0;
+      for (let i = 0; i < coords.length; i++) {
+        sumLng += coords[i][0];
+        sumLat += coords[i][1];
+      }
+      coordinates = {
+        lng: sumLng / coords.length,
+        lat: sumLat / coords.length
+      };
+    } else if (feature.geometry.type === 'Point') {
+      // For points, use the coordinates directly
+      coordinates = {
+        lng: feature.geometry.coordinates[0],
+        lat: feature.geometry.coordinates[1]
+      };
+    }
+    
+    return coordinates;
+  }
+
+    function checkPasscode(event) {
+      if (event && typeof event.preventDefault === 'function') event.preventDefault();
+      const input = document.getElementById('passcode').value;
+      // play brand video second time on submit click
+      playVideoOnce();
+      if (input === '22121998') {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('map').style.display = 'block';
+        initMap();
+        // give the map a moment to initialize then ensure the container size is correct
+        setTimeout(() => {
+          if (map) map.invalidateSize();
+        }, 250);
+      } else {
+        document.getElementById('error').textContent = 'Incorrect code';
+        const inputEl = document.getElementById('passcode');
+        if (inputEl) inputEl.focus();
+      }
+    }
+
+
+    function initMap() {
+      // Limit zoom to avoid requesting missing tiles at high zoom levels
+      const MIN_Z = 10;
+      const MAX_Z = 18; // adjust if needed (Esri World Imagery supports up to ~20 but labels/other layers may not)
+      map = L.map('map', { minZoom: MIN_Z, maxZoom: MAX_Z }).setView([23.02, 72.30], 13);
+
+      // Create a top pane for labels so they render above the satellite imagery
+      map.createPane('labels');
+      map.getPane('labels').style.zIndex = 650; // above overlay layers
+      // allow clicks to pass through label pane so it doesn't block interactions
+      map.getPane('labels').style.pointerEvents = 'none';
+
+      // Create a pane for geojson overlays so they render above base but below labels
+      map.createPane('geojson');
+      map.getPane('geojson').style.zIndex = 600;
+
+      // Esri World Imagery base layer (satellite)
+      const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: MAX_Z,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+      }).addTo(map);
+
+      // Esri reference/labels overlay (World Boundaries/Places or Reference Labels)
+      // We'll use the 'Reference' layer which contains place labels and boundaries.
+      const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: MAX_Z,
+        pane: 'labels',
+        attribution: 'Labels &copy; Esri'
+      }).addTo(map);
+
+      // Add a small control for GeoJSON actions
+      const infoControl = L.control({ position: 'topright' });
+      infoControl.onAdd = function () {
+        const div = L.DomUtil.create('div', 'geojson-control');
+        div.style.background = 'rgba(255,255,255,0.85)';
+        div.style.padding = '8px';
+        div.style.borderRadius = '6px';
+        div.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+        div.innerHTML = '<div id="geo-count">Features: 0</div><button id="geo-toggle">Hide</button> <button id="geo-zoom">Zoom</button> <button id="geo-refresh">Refresh</button>';
+        return div;
+      };
+      infoControl.addTo(map);
+
+      // If the user interacts (pan/zoom), stop auto-fitting on subsequent reloads
+      map.on('movestart zoomstart', function () {
+        autoFitOnLoad = false;
+      });
+
+      // Load GeoJSON on map initialization
+      loadGeoJSON();
+      // No automatic refresh - data updates weekly, not every minute
+
+      // show a brief warning when zoom limit is reached
+      map.on('zoomend', function () {
+        const z = map.getZoom();
+        if (z === map.getMinZoom() || z === map.getMaxZoom()) {
+          const warn = document.getElementById('zoom-warning');
+          if (warn) {
+            warn.style.opacity = '1';
+            setTimeout(() => { warn.style.opacity = '0'; }, 1200);
+          }
+        }
+      });
+    }
+
+    function processGeoJSON(data) {
+      if (!data || !data.features || !data.features.length) {
+        console.warn('GeoJSON empty or invalid:', data);
+        return;
+      }
+      
+      console.log('🔄 Loading GeoJSON data...');
+      
+      if (geojsonLayer) {
+        map.removeLayer(geojsonLayer);
+      }
+      geojsonLayer = L.geoJSON(data, {
+        pane: 'geojson',
+        style: function(feature) {
+          return { color: '#ff7800', weight: 3, opacity: 0.9, fillOpacity: 0.25 };
+        },
+        onEachFeature: function (feature, layer) {
+          const info = Object.entries(feature.properties || {})
+            .map(([k, v]) => `<b>${k}</b>: ${v}`)
+            .join('<br>');
+          layer.bindPopup(info || 'No properties', {
+            autoClose: false,
+            closeOnClick: true,
+            autoPan: true,
+            keepInView: true,
+            className: 'custom-popup',
+            maxWidth: 300,
+            minWidth: 200
+          });
+          
+          // Custom timing: close popup after 8 seconds
+          layer.on('popupopen', function() {
+            setTimeout(() => {
+              if (layer.isPopupOpen()) {
+                layer.closePopup();
+              }
+            }, 8000); // 8 seconds total (5 seconds more than default)
+          });
+        }
+      }).addTo(map);
+
+      // update control with feature count and attach actions
+      try {
+        const countDiv = document.getElementById('geo-count');
+        if (countDiv) countDiv.textContent = 'Features: ' + (data.features.length || 0);
+        const toggleBtn = document.getElementById('geo-toggle');
+        const zoomBtn = document.getElementById('geo-zoom');
+        const refreshBtn = document.getElementById('geo-refresh');
+        if (toggleBtn) {
+          toggleBtn.onclick = function () {
+            if (map.hasLayer(geojsonLayer)) {
+              map.removeLayer(geojsonLayer);
+              toggleBtn.textContent = 'Show';
+            } else {
+              geojsonLayer.addTo(map);
+              toggleBtn.textContent = 'Hide';
+            }
+          };
+        }
+        if (zoomBtn) {
+          zoomBtn.onclick = function () {
+            try {
+              const bounds = geojsonLayer.getBounds();
+              if (bounds.isValid()) map.fitBounds(bounds, { padding: [20,20] });
+            } catch (e) {}
+          };
+        }
+        if (refreshBtn) {
+          refreshBtn.onclick = function () {
+            console.log('🔄 Manual refresh triggered');
+            loadGeoJSON();
+          };
+        }
+      } catch (e) { console.warn(e); }
+
+      // Bind WhatsApp popups to each feature layer
+      try {
+        geojsonLayer.eachLayer(function (layer) {
+          if (layer.feature) bindWhatsAppPopupToLayer(layer.feature, layer);
+        });
+      } catch (e) { console.warn('Error binding WhatsApp popups', e); }
+
+      // bring geojson above base layers
+      if (geojsonLayer && geojsonLayer.bringToFront) geojsonLayer.bringToFront();
+
+      // zoom to layer bounds for first load
+      if (autoFitOnLoad) {
+        try {
+          const bounds = geojsonLayer.getBounds();
+          if (bounds.isValid()) map.fitBounds(bounds, { padding: [20,20] });
+        } catch (e) {
+          // ignore if no bounds
+        }
+        // only auto-fit once (unless user resets autoFitOnLoad elsewhere)
+        autoFitOnLoad = false;
+      }
+
+      console.info('Loaded GeoJSON features:', data.features.length);
+    }
+
+    function loadGeoJSON() {
+      console.log('🔄 Attempting to load GeoJSON...');
+      
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const url = `data/properties.geojson?t=${timestamp}`;
+      console.log('📁 Fetching from:', url);
+      
+      fetch(url, { 
+        cache: "no-cache",
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
+        .then(response => {
+          console.log('📡 Response status:', response.status, response.statusText);
+          if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          return response.json();
+        })
+        .then(data => {
+          console.log('✅ GeoJSON loaded successfully:', data.features?.length || 0, 'features');
+          console.log('📊 Features:', data.features?.map(f => f.properties?.fid || 'no-fid'));
+          processGeoJSON(data);
+        })
+        .catch(err => {
+          console.warn('❌ Error loading properties.geojson via fetch:', err);
+          console.log('🔍 Error details:', err.message);
+          
+          // Check if we're running on file:// protocol
+          if (window.location.protocol === 'file:') {
+            console.warn('⚠️ Running on file:// protocol - CORS restrictions prevent fetch');
+            console.log('💡 Solution: Use a local server (e.g., Python: python -m http.server)');
+          }
+          
+          // Attempt to load embedded fallback
+          try {
+            const el = document.getElementById('properties-embedded');
+            if (el && el.textContent) {
+              const embedded = JSON.parse(el.textContent);
+              console.info('🔄 Using embedded GeoJSON fallback');
+              processGeoJSON(embedded);
+              return;
+            }
+          } catch (e) {
+            console.warn('❌ Embedded GeoJSON parse failed', e);
+          }
+          console.error('💥 GeoJSON could not be loaded. Check network or CORS.');
+        });
+    }
+
+
+  </script>
+
+</body>
+</html>
