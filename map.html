@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f1724">
   <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'none';">
-  <title>terravest group </title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Project 369 Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Remixicon for lock icon -->
@@ -55,15 +58,30 @@
       height: 100%;
       object-fit: cover;
       z-index: 0;
-      opacity: 1;
+      opacity: 0;
       filter: brightness(0.85) contrast(1.15);
       pointer-events: none;
       background: #000;
+      transition: opacity 0.5s ease-in-out;
+    }
+
+    /* Background image while video loads */
+    .login-bg-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      filter: brightness(0.85) contrast(1.15);
+      pointer-events: none;
+      opacity: 1;
     }
 
     /* Ensure video covers entire viewport on all devices */
     @media (max-width: 768px) {
-      .login-bg-video {
+      .login-bg-video, .login-bg-image {
         width: 100vw;
         height: 100vh;
         object-fit: cover;
@@ -241,7 +259,7 @@
 
     /* Reduced motion support */
     @media (prefers-reduced-motion: reduce) {
-      .login-bg-video {
+      .login-bg-video, .login-bg-image {
         display: none;
       }
       #login {
@@ -295,7 +313,199 @@
     margin-top: 0;
     touch-action: none;
   }
-    .zoom-warning {
+  
+  /* View toggle button - green style to match login */
+  #list-view-btn {
+    position: absolute;
+    top: 115px;
+    right: 10px;
+    z-index: 1000;
+    background: linear-gradient(180deg, #0a7a3b, #066533);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Poppins', Arial, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(6, 122, 59, 0.4);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  #list-view-btn:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(6, 122, 59, 0.5);
+  }
+  
+  #list-view-btn:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+  }
+  
+  /* Backdrop for popup */
+  #property-list::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: -1;
+  }
+  
+  /* Property list popup modal */
+  #property-list {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    z-index: 2000;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease-out;
+  }
+  
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -60%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  }
+  
+  #property-list.active {
+    display: block;
+  }
+  
+  /* List popup header - green style */
+  .list-popup-header {
+    background: linear-gradient(180deg, #0a7a3b, #066533);
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .list-popup-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+  }
+  
+  .close-list-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+  
+  .close-list-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: rotate(90deg);
+  }
+  
+  /* List content with scroll */
+  .list-popup-content {
+    max-height: calc(85vh - 80px);
+    overflow-y: auto;
+    padding: 20px;
+  }
+  
+  .property-item {
+    border: 1px solid #e5e7eb;
+    padding: 20px 24px;
+    margin: 12px 0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+  }
+  
+  .property-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(25, 135, 84, 0.15);
+    border-color: #198754;
+  }
+  
+  .property-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  
+  .property-meta {
+    font-size: 13px;
+    color: #6b7280;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+  }
+  
+  .property-meta span {
+    display: block;
+    margin: 4px 0;
+  }
+  
+  .property-meta strong {
+    color: #374151;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  
+  .view-on-map-btn {
+    margin-top: 12px;
+    padding: 10px 20px;
+    background: linear-gradient(180deg, #0a7a3b, #066533);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(6, 122, 59, 0.2);
+  }
+  
+  .view-on-map-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(6, 122, 59, 0.3);
+  }
+  
+  .view-on-map-btn:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+  }
+  
+  .zoom-warning {
       position: absolute;
       top: 16px;
       left: 50%;
@@ -360,6 +570,9 @@
 <body>
 
   <div id="login">
+    <!-- Background image while video loads -->
+    <img class="login-bg-image" src="assets/background_video_image.png" alt="Background" onerror="this.style.display='none'; document.querySelector('.login-bg-fallback').style.display='block';" />
+    
     <!-- Full-screen background video -->
     <video class="login-bg-video" autoplay muted loop playsinline webkit-playsinline preload="metadata" disablePictureInPicture>
       <source src="assets/background_video.mp4" type="video/mp4">
@@ -389,13 +602,26 @@
           </div>
           <button id="login-btn" type="submit">Sign in</button>
           <div id="error" role="status" aria-live="polite"></div>
-          <div class="auth-foot">Need help? Contact 7383727206</div>
+          <div class="auth-foot">Need help? Contact support@terravest.example</div>
         </form>
       </div>
     </div>
   </div>
 
-  <div id="map"></div>
+  <div id="map">
+    <button id="list-view-btn">📋 List View</button>
+  </div>
+  
+  <div id="property-list">
+    <div class="list-popup-header">
+      <h2 class="list-popup-title">Property List</h2>
+      <button class="close-list-btn" onclick="closeListPopup()" title="Close">✕</button>
+    </div>
+    <div class="list-popup-content">
+      <div id="property-list-content"></div>
+    </div>
+  </div>
+  
   <div id="zoom-warning" class="zoom-warning">Zoom limit reached</div>
 
   <noscript>
@@ -404,27 +630,37 @@
     </div>
   </noscript>
 
-  <!-- Embedded fallback copy of properties.geojson (used if fetch fails / file:// cases) -->
+  <!-- 
+    Embedded fallback copy of properties.geojson (used if fetch fails / file:// cases)
+    ⚠️ WHEN YOU UPDATE data/properties.geojson:
+      1. Run update-geojson.bat (double-click it)
+      2. OR update this embedded data manually
+      3. Change GEOJSON_VERSION in the script section (around line 430)
+    Last updated: 2024-12-19 (Updated embedded data)
+  -->
   <script id="properties-embedded" type="application/json">
 {
 "type": "FeatureCollection",
 "name": "properties",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
 "features": [
-{ "type": "Feature", "properties": { "fid": 1, "Plot size": "2378", "Discription": "Agri/Juni sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.296972433400853, 23.023224996481765 ], [ 72.296978613967795, 23.023325489081458 ], [ 72.296978613967795, 23.023325489081458 ], [ 72.296995095479588, 23.023367202968757 ], [ 72.297015697369318, 23.023386163822355 ], [ 72.297291762691856, 23.023412709012916 ], [ 72.297349447983137, 23.023266710400154 ], [ 72.297380350817747, 23.02313208816259 ], [ 72.29736180911695, 23.023006946243736 ], [ 72.297143429085708, 23.022902661222634 ], [ 72.297141368896732, 23.022906453406634 ], [ 72.297141368896732, 23.022906453406634 ], [ 72.296972433400853, 23.023224996481765 ] ] ] } },
-{ "type": "Feature", "properties": { "fid": 2, "Plot size": "20000", "Discription": "Agriculture/juni sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.289779434938765, 23.043598221647724 ], [ 72.289779434938765, 23.043598221647724 ], [ 72.289732551500833, 23.04206025874711 ], [ 72.290746957620144, 23.04148127739451 ], [ 72.291167670088214, 23.042302297251638 ], [ 72.289779434938765, 23.043598221647724 ] ] ] } },
-{ "type": "Feature", "properties": { "fid": 4, "Plot size": "3500 sq.mtr", "Discription": "Navi sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.404888294315811, 23.024773690511857 ], [ 72.405425057585006, 23.024788481004009 ], [ 72.405553623637502, 23.024247147934521 ], [ 72.40521613774969, 23.024211650608123 ], [ 72.404888294315811, 23.024773690511857 ] ] ] } },
-{ "type": "Feature", "properties": { "fid": 5, "Plot size": "9155 sq.mtr/3.85 vigh", "Discription": "Agri/Juni sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.295975810194307, 23.053203006471481 ], [ 72.295588001113018, 23.053217571339371 ], [ 72.295374310394763, 23.053173876730973 ], [ 72.295291208448788, 23.05232911151456 ], [ 72.294772810595234, 23.052361882677808 ], [ 72.294883613189882, 23.053232136205693 ], [ 72.295128961792329, 23.053199365254265 ], [ 72.295152705205453, 23.053483379901621 ], [ 72.295991639136389, 23.053454250221776 ], [ 72.295975810194307, 23.053203006471481 ] ] ] } },
-{ "type": "Feature", "properties": { "fid": 1, "Plot size": "2378", "Discription": "Agri/Juni sharat" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.296972433400853, 23.023224996481765 ], [ 72.296978613967795, 23.023325489081458 ], [ 72.296978613967795, 23.023325489081458 ], [ 72.296995095479588, 23.023367202968757 ], [ 72.297015697369318, 23.023386163822355 ], [ 72.297291762691856, 23.023412709012916 ], [ 72.297349447983137, 23.023266710400154 ], [ 72.297380350817747, 23.02313208816259 ], [ 72.29736180911695, 23.023006946243736 ], [ 72.297143429085708, 23.022902661222634 ], [ 72.297141368896732, 23.022906453406634 ], [ 72.297141368896732, 23.022906453406634 ], [ 72.296972433400853, 23.023224996481765 ] ] ] } }
+{ "type": "Feature", "properties": { "Tittle": "Khoda 8vigha", "Tenure": "Juni sharat", "Plot size": "18024sq.mtr", "Price": "1.80cr/vigha", "FID": 2 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.289779906665231, 23.043585559630465 ], [ 72.289730424677487, 23.042053963202761 ], [ 72.290756051332409, 23.041462017214819 ], [ 72.291165402321838, 23.042310610305222 ], [ 72.289779906665231, 23.043585559630465 ] ] ] } },
+{ "type": "Feature", "properties": { "Tittle": "Godhavi 1 vigho", "Tenure": "Non agriculture", "Plot size": "1380sq.mtr", "Price": "3cr", "FID": 3 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.402469283227759, 23.025739814748928 ], [ 72.403360627276854, 23.026008985254727 ], [ 72.403588105706035, 23.025257015511077 ], [ 72.402664264738505, 23.025004933806031 ], [ 72.402469283227759, 23.025739814748928 ] ] ] } },
+{ "type": "Feature", "properties": { "Tittle": "Chandrasan 4vigha", "Tenure": "Juni sharat", "Plot size": "9155sq.mtr/3.85vigha", "Price": "1.30cr/vigha", "FID": 1 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 72.29601787336739, 23.05320988731858 ], [ 72.295402130057838, 23.053216713475372 ], [ 72.295290851146461, 23.052308831584973 ], [ 72.294767840263034, 23.052370267394739 ], [ 72.29487170058033, 23.053247431176612 ], [ 72.295127642076451, 23.053203061161451 ], [ 72.295146188561688, 23.053503411747798 ], [ 72.296006745476262, 23.053482933320012 ], [ 72.29601787336739, 23.05320988731858 ] ] ] } }
 ]
 }
   </script>
 
   <script>
+  // Version number - increment this when you update the GeoJSON file
+  // This ensures browsers always fetch the latest data
+  const GEOJSON_VERSION = '20241219_2';
+  
   let map;
   let geojsonLayer;
   let autoFitOnLoad = true; // auto-fit to geojson only on first load unless user interacts
   let videoPlayCount = 0; // track how many times video has played
+  let geoJsonData = null; // Store GeoJSON data globally for list view
 
   // Video control - play exactly twice
   function playVideoOnce() {
@@ -445,6 +681,27 @@
   // Play video on page load
   document.addEventListener('DOMContentLoaded', function() {
     setTimeout(playVideoOnce, 500); // small delay to ensure video is ready
+    
+    // Debug background image loading
+    const bgImage = document.querySelector('.login-bg-image');
+    if (bgImage) {
+      console.log('Background image element found:', bgImage);
+      console.log('Image src:', bgImage.src);
+      
+      bgImage.addEventListener('load', () => {
+        console.log('✅ Background image loaded successfully');
+        console.log('Image dimensions:', bgImage.naturalWidth, 'x', bgImage.naturalHeight);
+      });
+      
+      bgImage.addEventListener('error', (e) => {
+        console.error('❌ Background image failed to load:', e);
+        console.log('Image src:', bgImage.src);
+        bgImage.style.display = 'none';
+        document.querySelector('.login-bg-fallback').style.display = 'block';
+      });
+    } else {
+      console.error('❌ Background image element not found!');
+    }
     
     // Debug and force background video to play
     const bgVideo = document.querySelector('.login-bg-video');
@@ -474,7 +731,18 @@
           bgVideo.play().then(() => {
             console.log('Background video playing successfully');
             console.log('Video current time:', bgVideo.currentTime);
-            // Debug border removal not needed
+            
+            // Smooth transition from image to video
+            setTimeout(() => {
+              bgVideo.style.opacity = '1';
+              const bgImage = document.querySelector('.login-bg-image');
+              if (bgImage) {
+                bgImage.style.opacity = '0';
+                setTimeout(() => {
+                  bgImage.style.display = 'none';
+                }, 500);
+              }
+            }, 100);
           }).catch(e => {
             console.log('Background video play failed:', e);
             console.log('Error details:', e.message);
@@ -496,6 +764,12 @@
         console.log('Video error details:', bgVideo.error);
         console.log('Network state:', bgVideo.networkState);
         console.log('Ready state:', bgVideo.readyState);
+        
+        // Keep the background image visible if video fails
+        const bgImage = document.querySelector('.login-bg-image');
+        if (bgImage) {
+          bgImage.style.opacity = '1';
+        }
         
         // Show fallback background
         document.querySelector('.login-bg-fallback').style.display = 'block';
@@ -564,7 +838,7 @@
   function bindWhatsAppPopupToLayer(feature, layer) {
     const props = feature.properties || {};
     const fid = getPropertyValue(props, ['fid', 'id', 'FID']) || 'unknown';
-    const title = getPropertyValue(props, ['title', 'Title', 'name', 'Name', 'Discription', 'description']) || 'No title';
+    const title = getPropertyValue(props, ['title', 'Title', 'name', 'Name', 'Discription', 'description', 'Tittle']) || 'No title';
     const price = getPropertyValue(props, ['price', 'Price', 'cost']) || 'Price not set';
     // Try several common keys for plot/area/size (GeoJSON uses "Plot size" in your file)
     const area = getPropertyValue(props, ['Plot size', 'plot_size', 'plot size', 'area', 'Area', 'size', 'Size']) || 'N/A';
@@ -577,17 +851,23 @@
     const coordinates = getPropertyCoordinates(feature);
     const googleMapsLink = coordinates ? `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}` : '#';
 
+    // Build ALL properties list dynamically
+    const allProperties = Object.entries(props)
+      .filter(([k, v]) => k !== 'fid' && k !== 'FID' && k !== 'id') // Exclude fid/id from display
+      .map(([k, v]) => `<div style="color:#444;margin-bottom:4px"><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v || 'N/A')}</div>`)
+      .join('');
+
     const popupHtml = `
-      <div style="min-width:200px;">
-        <div style="font-weight:600;margin-bottom:6px">${escapeHtml(title)}</div>
-        <div style="color:#444;margin-bottom:6px"><strong>Price:</strong> ${escapeHtml(price)}</div>
-        <div style="color:#444;margin-bottom:8px"><strong>Size:</strong> ${escapeHtml(area)}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <a href="${waLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:8px 10px;background:#25D366;color:#fff;border-radius:6px;text-decoration:none;font-size:0.9rem;">
-            📱 WhatsApp
+      <div style="min-width:250px;max-width:400px;">
+        ${allProperties}
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #ddd;display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="${waLink}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:#25D366;color:#fff;border-radius:6px;text-decoration:none;font-size:0.9rem;font-weight:600;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.741-.788-3.705-.265-.359a9.851 9.851 0 01-1.517-5.26c.002-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.987 2.898a9.825 9.825 0 012.893 6.944c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+            WhatsApp
           </a>
-          <a href="${googleMapsLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:8px 10px;background:#4285F4;color:#fff;border-radius:6px;text-decoration:none;font-size:0.9rem;">
-            📍 Google Maps
+          <a href="${googleMapsLink}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:#4285F4;color:#fff;border-radius:6px;text-decoration:none;font-size:0.9rem;font-weight:600;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            Google Maps
           </a>
         </div>
       </div>
@@ -599,8 +879,8 @@
       autoPan: true,
       keepInView: true,
       className: 'custom-popup',
-      maxWidth: 300,
-      minWidth: 200
+      maxWidth: 450,
+      minWidth: 250
     });
     
     // Custom timing: close popup after 8 seconds
@@ -734,6 +1014,9 @@
         return;
       }
       
+      // Store GeoJSON data globally for list view
+      geoJsonData = data;
+      
       console.log('🔄 Loading GeoJSON data...');
       
       if (geojsonLayer) {
@@ -831,27 +1114,34 @@
     function loadGeoJSON() {
       console.log('🔄 Attempting to load GeoJSON...');
       
-      // Add timestamp to prevent caching
+      // Add timestamp, version, and random value to prevent caching
       const timestamp = new Date().getTime();
-      const url = `data/properties.geojson?t=${timestamp}`;
+      const random = Math.random().toString(36).substring(7);
+      const url = `data/properties.geojson?v=${GEOJSON_VERSION}_${timestamp}_${random}`;
       console.log('📁 Fetching from:', url);
+      console.log('🕒 Cache-busting params:', { version: GEOJSON_VERSION, timestamp, random });
       
+      // Try using fetch with different methods to prevent caching
       fetch(url, { 
-        cache: "no-cache",
+        method: 'GET',
+        cache: 'no-store', // Most aggressive: no cache at all
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
           'Pragma': 'no-cache',
-          'Expires': '0'
+          'Expires': '0',
+          'If-Modified-Since': 'Thu, 01 Jan 1970 00:00:00 GMT',
+          'If-None-Match': '*'
         }
       })
         .then(response => {
           console.log('📡 Response status:', response.status, response.statusText);
+          console.log('📡 Response headers:', response.headers.get('Cache-Control'));
           if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           return response.json();
         })
         .then(data => {
           console.log('✅ GeoJSON loaded successfully:', data.features?.length || 0, 'features');
-          console.log('📊 Features:', data.features?.map(f => f.properties?.fid || 'no-fid'));
+          console.log('📊 Features:', data.features?.map(f => f.properties?.FID || f.properties?.fid || 'no-id'));
           processGeoJSON(data);
         })
         .catch(err => {
@@ -870,6 +1160,7 @@
             if (el && el.textContent) {
               const embedded = JSON.parse(el.textContent);
               console.info('🔄 Using embedded GeoJSON fallback');
+              console.log('⚠️ Using fallback data - update GeoJSON via server fetch for real-time updates');
               processGeoJSON(embedded);
               return;
             }
@@ -880,6 +1171,108 @@
         });
     }
 
+    // === View Toggle Functions ===
+    
+    // Open list popup view
+    function openListView() {
+      document.getElementById('property-list').classList.add('active');
+      
+      // Populate the list if not already populated
+      if (geoJsonData && document.getElementById('property-list-content').children.length === 0) {
+        populatePropertyList();
+      }
+    }
+    
+    // Close list popup
+    function closeListPopup() {
+      document.getElementById('property-list').classList.remove('active');
+    }
+    
+    // Populate property list from GeoJSON data
+    function populatePropertyList() {
+      if (!geoJsonData || !geoJsonData.features) {
+        console.warn('No GeoJSON data available for list view');
+        return;
+      }
+      
+      const listContent = document.getElementById('property-list-content');
+      listContent.innerHTML = ''; // Clear existing content
+      
+      geoJsonData.features.forEach((feature, index) => {
+        const props = feature.properties || {};
+        
+        // Get property values
+        const fid = getPropertyValue(props, ['fid', 'FID', 'id']) || index + 1;
+        const title = getPropertyValue(props, ['title', 'Title', 'name', 'Name', 'Discription', 'description', 'Tittle']) || 'No title';
+        const size = getPropertyValue(props, ['Plot size', 'plot_size', 'plot size', 'area', 'Area', 'size', 'Size']) || 'N/A';
+        const price = getPropertyValue(props, ['price', 'Price', 'cost']) || 'Price not set';
+        const tenure = getPropertyValue(props, ['Tenure', 'tenure']) || 'N/A';
+        
+        // Get coordinates
+        const coordinates = getPropertyCoordinates(feature);
+        
+        // Create property card HTML
+        const propertyHtml = `
+          <div class="property-item" data-index="${index}">
+            <div class="property-title">${escapeHtml(title)}</div>
+            <div class="property-meta">
+              <span><strong>ID:</strong> ${fid}</span>
+              <span><strong>Size:</strong> ${escapeHtml(size)}</span>
+              <span><strong>Price:</strong> ${escapeHtml(price)}</span>
+              <span><strong>Tenure:</strong> ${escapeHtml(tenure)}</span>
+            </div>
+            <button class="view-on-map-btn" onclick="zoomToProperty(${index})">
+              🗺️ View on Map
+            </button>
+          </div>
+        `;
+        
+        listContent.innerHTML += propertyHtml;
+      });
+      
+      console.log(`✅ Populated list with ${geoJsonData.features.length} properties`);
+    }
+    
+    // Zoom to property on the map
+    function zoomToProperty(index) {
+      if (!geoJsonData || !geoJsonData.features || !geoJsonData.features[index]) {
+        console.warn('Invalid property index:', index);
+        return;
+      }
+      
+      const feature = geoJsonData.features[index];
+      const coordinates = getPropertyCoordinates(feature);
+      
+      if (coordinates) {
+        // Close the list popup
+        closeListPopup();
+        
+        // Wait a moment for popup to close, then zoom
+        setTimeout(() => {
+          if (map) {
+            map.setView([coordinates.lat, coordinates.lng], 16);
+            
+            // Highlight the feature by opening its popup
+            if (geojsonLayer) {
+              geojsonLayer.eachLayer(function(layer) {
+                if (layer.feature === feature) {
+                  layer.openPopup();
+                }
+              });
+            }
+          }
+        }, 300);
+      }
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      const listViewBtn = document.getElementById('list-view-btn');
+      
+      if (listViewBtn) {
+        listViewBtn.addEventListener('click', openListView);
+      }
+    });
 
   </script>
 
