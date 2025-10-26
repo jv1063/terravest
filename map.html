@@ -49,6 +49,17 @@
       overflow: hidden;
     }
 
+    /* Video wrapper with background image */
+    .video-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('assets/background_video_image.png') center center / cover no-repeat;
+      z-index: 0;
+    }
+
     /* Full-screen background video */
     .login-bg-video {
       position: absolute;
@@ -57,31 +68,16 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      z-index: 0;
       opacity: 0;
       filter: brightness(0.85) contrast(1.15);
       pointer-events: none;
-      background: #000;
-      transition: opacity 0.5s ease-in-out;
-    }
-
-    /* Background image while video loads */
-    .login-bg-image {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: -2;
-      filter: brightness(0.85) contrast(1.15);
-      pointer-events: none;
-      opacity: 1;
+      background-color: transparent !important;
+      transition: opacity 0.6s ease-in;
     }
 
     /* Ensure video covers entire viewport on all devices */
     @media (max-width: 768px) {
-      .login-bg-video, .login-bg-image {
+      .video-wrapper, .login-bg-video {
         width: 100vw;
         height: 100vh;
         object-fit: cover;
@@ -259,7 +255,7 @@
 
     /* Reduced motion support */
     @media (prefers-reduced-motion: reduce) {
-      .login-bg-video, .login-bg-image {
+      .video-wrapper, .login-bg-video {
         display: none;
       }
       #login {
@@ -570,14 +566,13 @@
 <body>
 
   <div id="login">
-    <!-- Background image while video loads -->
-    <img class="login-bg-image" src="assets/background_video_image.png" alt="Background" onerror="this.style.display='none'; document.querySelector('.login-bg-fallback').style.display='block';" />
-    
-    <!-- Full-screen background video -->
-    <video class="login-bg-video" autoplay muted loop playsinline webkit-playsinline preload="metadata" disablePictureInPicture>
-      <source src="assets/background_video.mp4" type="video/mp4">
-      <!-- Fallback for browsers that don't support video -->
-    </video>
+    <!-- Video wrapper with background image -->
+    <div class="video-wrapper">
+      <video class="login-bg-video" autoplay muted loop playsinline webkit-playsinline preload="auto" poster="assets/background_video_image.png" disablePictureInPicture>
+        <source src="assets/background_video.mp4" type="video/mp4">
+        <!-- Fallback for browsers that don't support video -->
+      </video>
+    </div>
     
     <!-- Fallback background image if video fails -->
     <div class="login-bg-fallback"></div>
@@ -682,25 +677,12 @@
   document.addEventListener('DOMContentLoaded', function() {
     setTimeout(playVideoOnce, 500); // small delay to ensure video is ready
     
-    // Debug background image loading
-    const bgImage = document.querySelector('.login-bg-image');
-    if (bgImage) {
-      console.log('Background image element found:', bgImage);
-      console.log('Image src:', bgImage.src);
-      
-      bgImage.addEventListener('load', () => {
-        console.log('✅ Background image loaded successfully');
-        console.log('Image dimensions:', bgImage.naturalWidth, 'x', bgImage.naturalHeight);
-      });
-      
-      bgImage.addEventListener('error', (e) => {
-        console.error('❌ Background image failed to load:', e);
-        console.log('Image src:', bgImage.src);
-        bgImage.style.display = 'none';
-        document.querySelector('.login-bg-fallback').style.display = 'block';
-      });
+    // Debug video wrapper background
+    const videoWrapper = document.querySelector('.video-wrapper');
+    if (videoWrapper) {
+      console.log('✅ Video wrapper found with background image');
     } else {
-      console.error('❌ Background image element not found!');
+      console.error('❌ Video wrapper not found!');
     }
     
     // Debug and force background video to play
@@ -718,33 +700,25 @@
       });
       
       bgVideo.addEventListener('loadeddata', () => {
-        console.log('Background video data loaded');
+        console.log('✅ Background video data loaded');
         console.log('Video dimensions:', bgVideo.videoWidth, 'x', bgVideo.videoHeight);
+        console.log('Video ready state:', bgVideo.readyState);
+        
+        // Fade in video after it's loaded
+        bgVideo.style.opacity = '1';
       });
       
       bgVideo.addEventListener('canplay', () => {
-        console.log('Background video can play');
+        console.log('✅ Background video can play');
         console.log('Video duration:', bgVideo.duration);
         
         // Force play with multiple attempts
         const playVideo = () => {
           bgVideo.play().then(() => {
-            console.log('Background video playing successfully');
+            console.log('✅ Background video playing successfully');
             console.log('Video current time:', bgVideo.currentTime);
-            
-            // Smooth transition from image to video
-            setTimeout(() => {
-              bgVideo.style.opacity = '1';
-              const bgImage = document.querySelector('.login-bg-image');
-              if (bgImage) {
-                bgImage.style.opacity = '0';
-                setTimeout(() => {
-                  bgImage.style.display = 'none';
-                }, 500);
-              }
-            }, 100);
           }).catch(e => {
-            console.log('Background video play failed:', e);
+            console.log('❌ Background video play failed:', e);
             console.log('Error details:', e.message);
           });
         };
@@ -759,16 +733,16 @@
       });
       
       bgVideo.addEventListener('error', (e) => {
-        console.error('Background video error:', e);
+        console.error('❌ Background video error:', e);
         console.log('Video src:', bgVideo.src || bgVideo.querySelector('source')?.src);
         console.log('Video error details:', bgVideo.error);
         console.log('Network state:', bgVideo.networkState);
         console.log('Ready state:', bgVideo.readyState);
         
-        // Keep the background image visible if video fails
-        const bgImage = document.querySelector('.login-bg-image');
-        if (bgImage) {
-          bgImage.style.opacity = '1';
+        // Keep the wrapper background image visible if video fails
+        const videoWrapper = document.querySelector('.video-wrapper');
+        if (videoWrapper) {
+          console.log('✅ Keeping wrapper background image visible');
         }
         
         // Show fallback background
