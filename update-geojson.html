@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoJSON Update Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .section h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #229954;
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #bee5eb;
+        }
+        .instructions {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #ffeaa7;
+        }
+        .copy-btn {
+            background: #3498db;
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ GeoJSON Update Tool</h1>
+        
+        <div class="instructions">
+            <h3>📋 How to use this tool:</h3>
+            <ol>
+                <li><strong>Copy your property polygon data</strong> from your GIS software or other source</li>
+                <li><strong>Paste it</strong> into the "New GeoJSON Data" textarea below</li>
+                <li><strong>Click "Validate & Preview"</strong> to check your data</li>
+                <li><strong>Click "Generate Updated Files"</strong> to create the files you need</li>
+                <li><strong>Copy the generated content</strong> and paste it into your GitHub files</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>📝 Step 1: Paste Your New GeoJSON Data</h2>
+            <p>Paste your property polygon data here (it should be valid GeoJSON format):</p>
+            <textarea id="newGeoJSON" placeholder="Paste your GeoJSON data here..."></textarea>
+            <br>
+            <button onclick="validateGeoJSON()">✅ Validate & Preview</button>
+            <button onclick="loadCurrentData()">📂 Load Current Data</button>
+        </div>
+
+        <div id="validationResult"></div>
+
+        <div class="section">
+            <h2>📄 Step 2: Generated Files</h2>
+            <p>After validation, click "Generate Updated Files" to create the content you need to copy to GitHub:</p>
+            <button onclick="generateFiles()" id="generateBtn" disabled>🔄 Generate Updated Files</button>
+        </div>
+
+        <div id="generatedFiles"></div>
+
+        <div class="section">
+            <h2>📋 Step 3: GitHub Instructions</h2>
+            <div class="info">
+                <h3>To update your website:</h3>
+                <ol>
+                    <li><strong>Update data/properties.geojson:</strong> Copy the generated GeoJSON content and paste it into your <code>data/properties.geojson</code> file in GitHub</li>
+                    <li><strong>Update map.html:</strong> Copy the generated HTML content and paste it into your <code>map.html</code> file in GitHub</li>
+                    <li><strong>Commit changes:</strong> Commit and push your changes to GitHub</li>
+                    <li><strong>Wait for deployment:</strong> GitHub Actions will automatically update your website</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGeoJSON = null;
+
+        function validateGeoJSON() {
+            const input = document.getElementById('newGeoJSON').value.trim();
+            const resultDiv = document.getElementById('validationResult');
+            
+            if (!input) {
+                resultDiv.innerHTML = '<div class="error">❌ Please paste your GeoJSON data first</div>';
+                return;
+            }
+
+            try {
+                const geoJSON = JSON.parse(input);
+                
+                // Validate GeoJSON structure
+                if (geoJSON.type !== 'FeatureCollection') {
+                    throw new Error('Invalid GeoJSON: Must be a FeatureCollection');
+                }
+                
+                if (!Array.isArray(geoJSON.features)) {
+                    throw new Error('Invalid GeoJSON: Must have features array');
+                }
+
+                currentGeoJSON = geoJSON;
+                
+                // Count features and get titles
+                const featureCount = geoJSON.features.length;
+                const titles = geoJSON.features.map(f => 
+                    f.properties?.Tittle || f.properties?.title || f.properties?.name || 'No title'
+                );
+
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ <strong>GeoJSON validation passed!</strong><br>
+                        📊 Features found: ${featureCount}<br>
+                        📝 Property titles:<br>
+                        ${titles.map((title, i) => `&nbsp;&nbsp;${i + 1}. ${title}`).join('<br>')}
+                    </div>
+                `;
+
+                document.getElementById('generateBtn').disabled = false;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ <strong>Validation failed:</strong> ${error.message}</div>`;
+                document.getElementById('generateBtn').disabled = true;
+            }
+        }
+
+        function loadCurrentData() {
+            // Load current data from the existing file
+            fetch('data/properties.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('newGeoJSON').value = JSON.stringify(data, null, 4);
+                    validateGeoJSON();
+                })
+                .catch(error => {
+                    document.getElementById('validationResult').innerHTML = 
+                        '<div class="error">❌ Could not load current data. Make sure you\'re running this on a web server.</div>';
+                });
+        }
+
+        function generateFiles() {
+            if (!currentGeoJSON) {
+                alert('Please validate your GeoJSON data first');
+                return;
+            }
+
+            const filesDiv = document.getElementById('generatedFiles');
+            
+            // Generate new version number
+            const timestamp = new Date();
+            const version = `20241219_${timestamp.getHours()}${timestamp.getMinutes()}${timestamp.getSeconds()}`;
+            
+            // Generate GeoJSON content
+            const geoJSONContent = JSON.stringify(currentGeoJSON, null, 4);
+            
+            // Generate embedded script content
+            const embeddedScript = `<script id="properties-embedded" type="application/json">
+${geoJSONContent}
+  </script>`;
+
+            filesDiv.innerHTML = `
+                <div class="section">
+                    <h3>📄 File 1: data/properties.geojson</h3>
+                    <p>Copy this content and paste it into your <code>data/properties.geojson</code> file in GitHub:</p>
+                    <textarea readonly style="height: 200px;">${geoJSONContent}</textarea>
+                    <br>
+                    <button class="copy-btn" onclick="copyToClipboard('geoJSONContent')">📋 Copy GeoJSON</button>
+                </div>
+
+                <div class="section">
+                    <h3>📄 File 2: map.html (Embedded Script Section)</h3>
+                    <p>Find the embedded script section in your <code>map.html</code> file and replace it with this content:</p>
+                    <textarea readonly style="height: 200px;">${embeddedScript}</textarea>
+                    <br>
+                    <button class="copy-btn" onclick="copyToClipboard('embeddedScript')">📋 Copy Embedded Script</button>
+                </div>
+
+                <div class="section">
+                    <h3>📄 File 3: map.html (Version Update)</h3>
+                    <p>Find the line with <code>const GEOJSON_VERSION</code> in your <code>map.html</code> file and replace it with:</p>
+                    <textarea readonly style="height: 50px;">const GEOJSON_VERSION = '${version}';</textarea>
+                    <br>
+                    <button class="copy-btn" onclick="copyToClipboard('versionLine')">📋 Copy Version Line</button>
+                </div>
+
+                <div class="success">
+                    <h3>🎉 Files Generated Successfully!</h3>
+                    <p><strong>Version:</strong> ${version}</p>
+                    <p><strong>Features:</strong> ${currentGeoJSON.features.length}</p>
+                    <p>Now copy each section above to the corresponding files in your GitHub repository.</p>
+                </div>
+            `;
+
+            // Store content for copying
+            window.geoJSONContent = geoJSONContent;
+            window.embeddedScript = embeddedScript;
+            window.versionLine = `const GEOJSON_VERSION = '${version}';`;
+        }
+
+        function copyToClipboard(contentName) {
+            const content = window[contentName];
+            navigator.clipboard.writeText(content).then(() => {
+                alert('Content copied to clipboard!');
+            }).catch(err => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = content;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Content copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
