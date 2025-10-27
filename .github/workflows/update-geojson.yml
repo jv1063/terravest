@@ -37,49 +37,26 @@ jobs:
           console.log('✅ GeoJSON validation passed:', data.features.length, 'features');
         "
         
-    - name: Update embedded data in HTML
+    - name: Verify external GeoJSON loading
       run: |
-        echo "Updating embedded GeoJSON data in map.html..."
+        echo "Verifying that map.html loads GeoJSON from external file..."
         node -e "
           const fs = require('fs');
-          const path = require('path');
+          const htmlContent = fs.readFileSync('map.html', 'utf8');
           
-          // Read GeoJSON data
-          const geoJsonData = JSON.parse(fs.readFileSync('data/properties.geojson', 'utf8'));
-          
-          // Read HTML file
-          let htmlContent = fs.readFileSync('map.html', 'utf8');
-          
-          // Generate new version number
-          const timestamp = new Date();
-          const version = \`20241219_\${timestamp.getHours()}\${timestamp.getMinutes()}\${timestamp.getSeconds()}\`;
-          
-          // Update embedded script
-          const scriptStart = htmlContent.indexOf('<script id=\"properties-embedded\" type=\"application/json\">');
-          const scriptEnd = htmlContent.indexOf('</script>', scriptStart);
-          
-          if (scriptStart === -1 || scriptEnd === -1) {
-            console.error('❌ Could not find embedded GeoJSON script');
+          // Check that embedded data is removed
+          if (htmlContent.includes('properties-embedded')) {
+            console.error('❌ Embedded GeoJSON data still present in map.html');
             process.exit(1);
           }
           
-          const newScript = \`<script id=\"properties-embedded\" type=\"application/json\">\n\${JSON.stringify(geoJsonData, null, 4)}\n  </script>\`;
-          htmlContent = htmlContent.substring(0, scriptStart) + newScript + htmlContent.substring(scriptEnd + 9);
-          
-          // Update version number
-          const versionRegex = /const GEOJSON_VERSION = '[^']*';/;
-          const newVersionLine = \`const GEOJSON_VERSION = '\${version}';\`;
-          
-          if (versionRegex.test(htmlContent)) {
-            htmlContent = htmlContent.replace(versionRegex, newVersionLine);
-            console.log('✅ Updated version number to:', version);
-          } else {
-            console.log('⚠️  Could not find GEOJSON_VERSION');
+          // Check that external loading is implemented
+          if (!htmlContent.includes('data/properties.geojson')) {
+            console.error('❌ External GeoJSON loading not found in map.html');
+            process.exit(1);
           }
           
-          // Write updated HTML
-          fs.writeFileSync('map.html', htmlContent);
-          console.log('✅ Updated map.html with new GeoJSON data');
+          console.log('✅ map.html correctly configured for external GeoJSON loading');
         "
         
     - name: Deploy to GitHub Pages
@@ -97,11 +74,16 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### What was updated:" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ GeoJSON data validated" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Embedded data updated in map.html" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Version number updated for cache busting" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ External loading verified in map.html" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ Changes deployed to GitHub Pages" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### How it works:" >> $GITHUB_STEP_SUMMARY
+        echo "- Map loads data directly from data/properties.geojson" >> $GITHUB_STEP_SUMMARY
+        echo "- No embedded data - always shows latest version" >> $GITHUB_STEP_SUMMARY
+        echo "- Cache busting ensures immediate updates" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Next steps:" >> $GITHUB_STEP_SUMMARY
         echo "1. Visit your GitHub Pages site" >> $GITHUB_STEP_SUMMARY
         echo "2. Press Ctrl+Shift+R to refresh and see changes" >> $GITHUB_STEP_SUMMARY
         echo "3. Verify all properties are displaying correctly" >> $GITHUB_STEP_SUMMARY
+

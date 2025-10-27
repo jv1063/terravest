@@ -1,10 +1,10 @@
 # 🗺️ Terravest Property Map
 
-Interactive property map displaying real estate data with automated updates.
+Interactive property map displaying real estate data with live external GeoJSON loading.
 
 ## 🚀 Live Website
 
-Your property map is automatically deployed to GitHub Pages and updates whenever you modify the `data/properties.geojson` file.
+Your property map loads data directly from `data/properties.geojson` and updates automatically when you modify the file.
 
 ## 📝 How to Update Properties
 
@@ -13,7 +13,7 @@ Your property map is automatically deployed to GitHub Pages and updates whenever
 2. **Click** the edit button (pencil icon)
 3. **Paste** your new property polygon data
 4. **Commit** your changes
-5. **Done!** Your website updates automatically in 2-3 minutes
+5. **Done!** Your website updates automatically
 
 ### Using Web Interface:
 1. **Open** `update-geojson.html` in your browser
@@ -25,14 +25,15 @@ Your property map is automatically deployed to GitHub Pages and updates whenever
 ## 🔧 Technical Details
 
 - **Frontend**: HTML5, CSS3, JavaScript, Leaflet.js
-- **Data**: GeoJSON format
+- **Data**: Live external GeoJSON loading (no embedded data)
 - **Deployment**: GitHub Actions + GitHub Pages
-- **Automation**: Automatic cache busting and embedded data updates
+- **Security**: Password protected (passcode: 22121998)
 
 ## 📁 Project Structure
 
 ```
-├── map.html                    # Main website
+project_369/
+├── map.html                    # Main website (password protected)
 ├── data/
 │   └── properties.geojson      # Property data (edit this file)
 ├── assets/                     # Images and videos
@@ -45,12 +46,20 @@ Your property map is automatically deployed to GitHub Pages and updates whenever
 ## 🎯 Features
 
 - ✅ Interactive map with satellite imagery
+- ✅ Live external GeoJSON loading
 - ✅ Property polygons with detailed information
 - ✅ WhatsApp integration for inquiries
 - ✅ Google Maps integration
 - ✅ Mobile-responsive design
+- ✅ Password protection
 - ✅ Automatic updates via GitHub Actions
 - ✅ Cache busting for instant updates
+
+## 🔐 Access
+
+- **Passcode**: `22121998`
+- **Login required** to view the map
+- **Data updates** automatically when you modify `data/properties.geojson`
 
 ## 📞 Support
 

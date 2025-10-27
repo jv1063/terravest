@@ -164,3 +164,4 @@ Once set up, updating your property map is as simple as:
 4. **Done!** Your website updates automatically
 
 No more manual file management, no more cache issues, no more forgetting to update embedded data - everything is automated! 🚀
+
