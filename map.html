@@ -3,12 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0f1724">
+  <meta name="theme-color" content="#ffffff">
   <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'none';">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Project 369 Map</title>
+  <!-- PWA manifest -->
+  <link rel="manifest" href="./manifest.json">
+  
+  <!-- PWA / App metadata -->
+  <meta name="application-name" content="Terravest">
+  <meta name="apple-mobile-web-app-title" content="Terravest">
+  <meta name="description" content="Secure Property Dashboard for managing and visualizing land and plot data with setellite map">
+
+  <!-- iOS PWA support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/app_icon.png">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/app_icon.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/app_icon.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Remixicon for lock icon -->
@@ -562,6 +578,51 @@
     
     /* Accessibility and motion preferences handled above */
   </style>
+  <script>
+    (function(){
+      try {
+        const link = document.querySelector('link[rel="manifest"]');
+        const href = link ? link.getAttribute('href') : null;
+        console.log('[PWA] Manifest link tag found:', !!link, 'href:', href);
+        if (href) {
+          const url = new URL(href, location.href).toString();
+          fetch(url, { cache: 'no-store' })
+            .then(r => {
+              console.log('[PWA] Manifest fetch status:', r.status, r.ok ? 'OK' : 'NOT OK');
+              if (!r.ok) console.warn('[PWA] Manifest not found — check path:', url);
+              return r.text();
+            })
+            .then(() => {
+              console.log('[PWA] Tip: If changes don\'t appear, use Ctrl+Shift+R (hard refresh).');
+            })
+            .catch(err => console.warn('[PWA] Manifest fetch failed — check path:', err));
+        } else {
+          console.warn('[PWA] No manifest <link> found in head.');
+        }
+      } catch(e) { console.warn('[PWA] Manifest check error:', e); }
+    })();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+          .then(reg => {
+            console.log('[PWA] Service worker registered with scope:', reg.scope);
+            reg.addEventListener('updatefound', () => {
+              const nw = reg.installing;
+              if (nw) {
+                nw.addEventListener('statechange', () => {
+                  if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[PWA] New content available; will use on next load.');
+                  }
+                });
+              }
+            });
+          })
+          .catch(err => console.error('[PWA] SW registration failed — check path ./service-worker.js:', err));
+      });
+    }
+  </script>
 </head>
 <body>
 
@@ -960,12 +1021,19 @@
     }
 
     function processGeoJSON(data) {
-      if (!data || !data.features || !data.features.length) {
+      if (!data || !Array.isArray(data.features)) {
         console.warn('GeoJSON empty or invalid:', data);
+        geoJsonData = data || { type: 'FeatureCollection', features: [] };
+        if (geojsonLayer && map && map.hasLayer(geojsonLayer)) {
+          map.removeLayer(geojsonLayer);
+        }
+        try {
+          const countDiv = document.getElementById('geo-count');
+          if (countDiv) countDiv.textContent = 'Features: 0';
+        } catch (e) {}
         return;
       }
       
-      // Store GeoJSON data globally for list view
       geoJsonData = data;
       
       console.log('🔄 Loading GeoJSON data...');
@@ -1187,11 +1255,20 @@
             
             // Highlight the feature by opening its popup
             if (geojsonLayer) {
+              let fid = getPropertyValue((feature.properties || {}), ['fid','FID','id']);
+              let opened = false;
               geojsonLayer.eachLayer(function(layer) {
-                if (layer.feature === feature) {
+                const lf = layer.feature;
+                if (lf && (lf === feature || getPropertyValue((lf.properties || {}), ['fid','FID','id']) === fid)) {
                   layer.openPopup();
+                  opened = true;
                 }
               });
+              if (!opened) {
+                const layers = geojsonLayer.getLayers();
+                const target = layers[index];
+                if (target && target.openPopup) target.openPopup();
+              }
             }
           }
         }, 300);
