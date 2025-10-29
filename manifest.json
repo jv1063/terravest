@@ -1,7 +1,8 @@
 {
+  "id": "/terravest/map.html",
   "name": "Terravest",
   "short_name": "Terravest",
-  "description": "Secure Property Dashboard for managing and visualizing land and plot data with setellite map",
+  "description": "Secure Property Dashboard for managing and visualizing land and plot data with satellite map",
   "start_url": "./map.html",
   "scope": "./",
   "display": "standalone",

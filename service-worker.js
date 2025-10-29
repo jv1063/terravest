@@ -1,7 +1,9 @@
 /* service-worker.js */
-const SW_VERSION = 'v1.1.0';
+const SW_VERSION = 'v1.2.0';
 const CACHE_PREFIX = 'terravest-pwa-';
 const CACHE_NAME = `${CACHE_PREFIX}${SW_VERSION}`;
+// Detect caches support (Safari private mode / older WebKit)
+const HAS_CACHES = (typeof self !== 'undefined') && (typeof caches !== 'undefined');
 
 // Keep core, lightweight assets only. Do not include large videos.
 const CORE_ASSETS = [
@@ -15,9 +17,14 @@ const CORE_ASSETS = [
 
 // Install: pre-cache core assets
 self.addEventListener('install', (event) => {
-  console.log('[SW]', SW_VERSION, 'installing…');
+  console.log('[SW]', SW_VERSION, 'installing… HAS_CACHES=', HAS_CACHES);
   event.waitUntil(
     (async () => {
+      if (!HAS_CACHES) {
+        console.warn('[SW] caches API not available; skipping pre-cache');
+        await self.skipWaiting();
+        return;
+      }
       try {
         const cache = await caches.open(CACHE_NAME);
         console.log('[SW] Caching core assets:', CORE_ASSETS);
@@ -42,6 +49,11 @@ self.addEventListener('activate', (event) => {
   console.log('[SW]', SW_VERSION, 'activating…');
   event.waitUntil(
     (async () => {
+      if (!HAS_CACHES) {
+        await self.clients.claim();
+        console.log('[SW] Active without caches');
+        return;
+      }
       const keys = await caches.keys();
       const deletions = keys.map((k) => {
         if (k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME) {
@@ -62,6 +74,24 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
 
   if (request.method !== 'GET') return;
+
+  // If caches are unavailable (Safari private mode), use network-only strategy with safe fallbacks
+  if (!HAS_CACHES) {
+    const reqUrl = new URL(request.url);
+    if (reqUrl.origin !== self.location.origin) return;
+    if (request.mode === 'navigate') {
+      event.respondWith(
+        fetch(request).catch(() => new Response('<h1>Offline</h1><p>Content not available offline.</p>', {
+          headers: { 'Content-Type': 'text/html' }
+        }))
+      );
+      return;
+    }
+    event.respondWith(
+      fetch(request).catch(() => new Response('', { status: 504, statusText: 'Offline' }))
+    );
+    return;
+  }
 
   const reqUrl = new URL(request.url);
 
