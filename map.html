@@ -579,7 +579,15 @@
       to { opacity: 1; transform: scale(1); }
     }
     
-    /* Accessibility and motion preferences handled above */
+    .transition-fade { transition: opacity 0.45s ease, transform 0.45s ease; }
+    .fade-in-start { opacity: 0; transform: translateY(10px); }
+    .fade-in-end { opacity: 1; transform: translateY(0); }
+    .fade-out-start { opacity: 1; transform: translateY(0); }
+    .fade-out-end { opacity: 0; transform: translateY(-10px); }
+    @media (prefers-reduced-motion: reduce) {
+      .transition-fade { transition: none; }
+      .fade-in-start, .fade-in-end, .fade-out-start, .fade-out-end { transform: none; }
+    }
   </style>
   <script>
     (function(){
@@ -940,16 +948,25 @@
     function checkPasscode(event) {
       if (event && typeof event.preventDefault === 'function') event.preventDefault();
       const input = document.getElementById('passcode').value;
-      // play brand video second time on submit click
       playVideoOnce();
       if (input === '22121998') {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('map').style.display = 'block';
-        initMap();
-        // give the map a moment to initialize then ensure the container size is correct
+        const loginEl = document.getElementById('login');
+        const mapEl = document.getElementById('map');
+        mapEl.style.display = 'block';
+        mapEl.classList.add('transition-fade','fade-in-start');
+        loginEl.classList.add('transition-fade','fade-out-start');
+        requestAnimationFrame(() => {
+          mapEl.classList.add('fade-in-end');
+          mapEl.classList.remove('fade-in-start');
+          loginEl.classList.add('fade-out-end');
+        });
         setTimeout(() => {
-          if (map) map.invalidateSize();
-        }, 250);
+          loginEl.style.display = 'none';
+          loginEl.classList.remove('transition-fade','fade-out-start','fade-out-end');
+          mapEl.classList.remove('transition-fade','fade-in-end');
+          initMap();
+          setTimeout(() => { if (map) map.invalidateSize(); }, 250);
+        }, 500);
       } else {
         document.getElementById('error').textContent = 'Incorrect code';
         const inputEl = document.getElementById('passcode');
