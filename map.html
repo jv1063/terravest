@@ -669,7 +669,7 @@
           </div>
           <button id="login-btn" type="submit">Sign in</button>
           <div id="error" role="status" aria-live="polite"></div>
-          <div class="auth-foot">Need help? Contact support@terravest.example</div>
+          <div class="auth-foot">Need help? Contact 917383727206</div>
         </form>
       </div>
     </div>
@@ -860,13 +860,13 @@
 
   function bindWhatsAppPopupToLayer(feature, layer) {
     const props = feature.properties || {};
-    const fid = getPropertyValue(props, ['fid', 'id', 'FID']) || 'unknown';
+    const fid = getPropertyValue(props, ['fid', 'id', 'FID']) || 'id';
     const title = getPropertyValue(props, ['title', 'Title', 'name', 'Name', 'Discription', 'description', 'Tittle']) || 'No title';
     const price = getPropertyValue(props, ['price', 'Price', 'cost']) || 'Price not set';
     // Try several common keys for plot/area/size (GeoJSON uses "Plot size" in your file)
     const area = getPropertyValue(props, ['Plot size', 'plot_size', 'plot size', 'area', 'Area', 'size', 'Size']) || 'N/A';
 
-    const message = `Hi, I'm interested in property ID ${fid}. ${title} ${price}`;
+    const message = `Hi, I'm interested in property ID ${id}. ${title} ${price}`;
     const encoded = encodeURIComponent(message);
     const waLink = `https://wa.me/${WA_NUMBER}?text=${encoded}`;
 
