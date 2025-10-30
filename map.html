@@ -664,8 +664,11 @@
   
   <div id="property-list">
     <div class="list-popup-header">
-      <h2 class="list-popup-title">Property List</h2>
+      <h2 class="list-popup-title">Inventory</h2>
       <button class="close-list-btn" onclick="closeListPopup()" title="Close">✕</button>
+    </div>
+    <div class="list-search" style="padding:12px 20px;border-bottom:1px solid #e5e7eb;">
+      <input id="property-search" type="text" placeholder="Search by ID, Title, Size, Price, Tenure" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
     </div>
     <div class="list-popup-content">
       <div id="property-list-content"></div>
@@ -822,7 +825,7 @@
 
     const message = `Hi, I'm interested in property ID ${fid}. ${title} ${price}`;
     const encoded = encodeURIComponent(message);
-    const waLink = `https://wa.me/${WA_NUMBER}?text=${encoded}`;
+    const waLink = `https://api.whatsapp.com/send?phone=${WA_NUMBER}&text=${encoded}`;
 
     // Get coordinates for Google Maps pin
     const coordinates = getPropertyCoordinates(feature);
@@ -1168,10 +1171,10 @@
     // Open list popup view
     function openListView() {
       document.getElementById('property-list').classList.add('active');
-      
-      // Populate the list if not already populated
-      if (geoJsonData && document.getElementById('property-list-content').children.length === 0) {
+      // Always populate/refresh the list and focus search
+      if (geoJsonData) {
         populatePropertyList();
+        try { const s = document.getElementById('property-search'); if (s) { s.focus(); s.select(); } } catch(e) {}
       }
     }
     
@@ -1180,8 +1183,8 @@
       document.getElementById('property-list').classList.remove('active');
     }
     
-    // Populate property list from GeoJSON data
-    function populatePropertyList() {
+    // Populate property list from GeoJSON data (with optional filter text)
+    function populatePropertyList(filterText = '') {
       if (!geoJsonData || !geoJsonData.features) {
         console.warn('No GeoJSON data available for list view');
         return;
@@ -1189,17 +1192,23 @@
       
       const listContent = document.getElementById('property-list-content');
       listContent.innerHTML = ''; // Clear existing content
-      
+      const q = (filterText || (document.getElementById('property-search')?.value || '')).toString().toLowerCase();
+      let shown = 0;
+
       geoJsonData.features.forEach((feature, index) => {
         const props = feature.properties || {};
         
         // Get property values
-        const fid = getPropertyValue(props, ['fid', 'FID', 'id']) || index + 1;
+        const fid = getPropertyValue(props, ['fid', 'FID', 'id', 'ID']) || index + 1;
         const title = getPropertyValue(props, ['title', 'Title', 'name', 'Name', 'Discription', 'description', 'Tittle']) || 'No title';
         const size = getPropertyValue(props, ['Plot size', 'plot_size', 'plot size', 'area', 'Area', 'size', 'Size']) || 'N/A';
         const price = getPropertyValue(props, ['price', 'Price', 'cost']) || 'Price not set';
         const tenure = getPropertyValue(props, ['Tenure', 'tenure']) || 'N/A';
         
+        // Build a searchable string
+        const hay = `${fid} ${title} ${size} ${price} ${tenure}`.toLowerCase();
+        if (q && !hay.includes(q)) return;
+
         // Get coordinates
         const coordinates = getPropertyCoordinates(feature);
         
@@ -1218,8 +1227,11 @@
         `;
         
         listContent.innerHTML += propertyHtml;
+        shown++;
       });
-      
+      if (shown === 0) {
+        listContent.innerHTML = '<div style="padding:24px;color:#6b7280;">No properties found.</div>';
+      }
       console.log(`✅ Populated list with ${geoJsonData.features.length} properties`);
     }
 
@@ -1276,6 +1288,12 @@
       
       if (listViewBtn) {
         listViewBtn.addEventListener('click', openListView);
+      }
+      // Live search
+      const searchEl = document.getElementById('property-search');
+      if (searchEl) {
+        searchEl.addEventListener('input', function(){ populatePropertyList(this.value); });
+        searchEl.addEventListener('keydown', function(e){ if (e.key === 'Escape') { this.value=''; populatePropertyList(''); } });
       }
       document.addEventListener('click', function(e){ const b = e.target.closest('.view-on-map-btn'); if (b) zoomToProperty(parseInt(b.dataset.index)); });
       // Recover map layout after app resumes from background
