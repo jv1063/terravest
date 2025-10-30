@@ -449,9 +449,11 @@
   .list-popup-content {
     max-height: calc(85vh - 80px);
     overflow-y: auto;
-    padding: 20px 20px 120px 20px; /* extra bottom space for last card/buttons */
+    padding: 20px 20px 24px 20px; /* base padding; spacer will add extra */
     scroll-padding-bottom: 120px; /* ensure last item is positioned away from bottom when scrolled */
   }
+  /* Invisible spacer to keep the last item above the bottom by one-card height */
+  #property-list-spacer { height: 0; pointer-events: none; }
   
   .property-item {
     border: 1px solid #e5e7eb;
@@ -673,6 +675,7 @@
     </div>
     <div class="list-popup-content">
       <div id="property-list-content"></div>
+      <div id="property-list-spacer" aria-hidden="true"></div>
     </div>
   </div>
   
@@ -1176,6 +1179,7 @@
       if (geoJsonData) {
         populatePropertyList();
         try { const s = document.getElementById('property-search'); if (s) { s.focus(); s.select(); } } catch(e) {}
+        try { updateListSpacer(); } catch(e) {}
       }
     }
     
@@ -1233,7 +1237,35 @@
       if (shown === 0) {
         listContent.innerHTML = '<div style="padding:24px;color:#6b7280;">No properties found.</div>';
       }
+      try { updateListSpacer(); } catch(e) {}
       console.log(`✅ Populated list with ${geoJsonData.features.length} properties`);
+    }
+
+    // Keep a spacer at the bottom equal to one card's height
+    function updateListSpacer() {
+      const container = document.querySelector('.list-popup-content');
+      const firstCard = container ? container.querySelector('.property-item') : null;
+      const spacer = document.getElementById('property-list-spacer');
+      if (!spacer) return;
+      if (!firstCard) {
+        const fallback = 140;
+        spacer.style.height = `${fallback}px`;
+        if (container) {
+          container.style.paddingBottom = `${fallback}px`;
+          try { container.style.scrollPaddingBottom = `${fallback}px`; } catch(_) {}
+        }
+        return;
+      }
+      const styles = window.getComputedStyle(firstCard);
+      const marginTop = parseFloat(styles.marginTop) || 0;
+      const marginBottom = parseFloat(styles.marginBottom) || 0;
+      const h = firstCard.offsetHeight + marginTop + marginBottom;
+      const hh = Math.ceil(h);
+      spacer.style.height = `${hh}px`;
+      if (container) {
+        container.style.paddingBottom = `${hh}px`;
+        try { container.style.scrollPaddingBottom = `${hh}px`; } catch(_) {}
+      }
     }
 
     // Zoom to property on the map
@@ -1296,6 +1328,8 @@
         searchEl.addEventListener('input', function(){ populatePropertyList(this.value); });
         searchEl.addEventListener('keydown', function(e){ if (e.key === 'Escape') { this.value=''; populatePropertyList(''); } });
       }
+      // Resize handler to recompute spacer on viewport changes
+      window.addEventListener('resize', function(){ try { updateListSpacer(); } catch(e) {} });
       document.addEventListener('click', function(e){ const b = e.target.closest('.view-on-map-btn'); if (b) zoomToProperty(parseInt(b.dataset.index)); });
       // Recover map layout after app resumes from background
       document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && map) { try { map.invalidateSize(); } catch(e) {} } });
