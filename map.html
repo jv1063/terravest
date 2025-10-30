@@ -320,7 +320,16 @@
       box-shadow: 0 12px 40px rgba(2,6,23,0.6);
       background: transparent;
     }
+    .auth-media video.brand-video {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(2,6,23,0.6);
+      background: transparent;
+    }
     .brand-logo { display: block; width: 160px; height: auto; }
+    .brand-video { display: block; width: 160px; height: auto; }
     .brand-title {
       margin: 0;
       font-size: 1.4rem;
@@ -661,7 +670,9 @@
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-media" aria-label="Brand logo">
-          <img class="brand-logo" src="assets/terravest_logo_gif.gif?v=11" data-gif="assets/terravest_logo_gif.gif?v=11" data-png="assets/terravest_logo.png?v=11" alt="Terravest" />
+          <video id="brand-video" class="brand-video" muted playsinline webkit-playsinline preload="auto" poster="assets/terravest_logo.png?v=11" disablePictureInPicture>
+            <source src="assets/terravest_logo_video.mp4" type="video/mp4">
+          </video>
           <h2 class="brand-title">Terravest Group</h2>
           <p class="brand-sub">Secure property dashboard — sign in to continue</p>
         </div>
@@ -673,7 +684,7 @@
               <path d="M17 8V9H7V8a5 5 0 1 1 10 0Zm-8 0a3 3 0 1 1 6 0V9H9V8ZM6 11h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Zm6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
             </svg>
           </div>
-          <button id="login-btn" type="submit" onclick="checkPasscode(event)">Sign in</button>
+          <button id="login-btn" type="submit">Sign in</button>
           <div id="error" role="status" aria-live="polite"></div>
           <div class="auth-foot">Need help? Contact 917383727206</div>
         </form>
@@ -740,11 +751,13 @@
   document.addEventListener('DOMContentLoaded', function() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    // Always use animated GIF logo
+    // Ensure brand video has proper attributes for inline playback
     try {
-      const logo = document.querySelector('.brand-logo');
-      if (logo && logo.dataset && logo.dataset.gif) {
-        logo.src = logo.dataset.gif;
+      const v = document.getElementById('brand-video');
+      if (v) {
+        v.muted = true;
+        v.setAttribute('playsinline','');
+        v.setAttribute('webkit-playsinline','');
       }
     } catch(_) {}
 
