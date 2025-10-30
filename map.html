@@ -616,6 +616,23 @@
       .transition-fade { transition: none; }
       .fade-in-start, .fade-in-end, .fade-out-start, .fade-out-end { transform: none; }
     }
+    #bottom-banner {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3000;
+      background: linear-gradient(180deg, #0a7a3b, #066533);
+      color: #ffffff;
+      padding: 8px 14px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.2;
+      letter-spacing: 0.3px;
+      pointer-events: none;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.35);
+      display: none; /* hidden on login screen; shown on map */
+    }
   </style>
   <script>
     (function(){
@@ -784,6 +801,7 @@
         const mapEl = document.getElementById('map');
         if (loginEl && mapEl) {
           mapEl.style.display = 'block';
+          try { const bb = document.getElementById('bottom-banner'); if (bb) bb.style.display = 'block'; } catch(_) {}
           document.body.style.overflow = '';
           loginEl.style.display = 'none';
           initMap();
@@ -947,6 +965,7 @@
         const loginEl = document.getElementById('login');
         const mapEl = document.getElementById('map');
         mapEl.style.display = 'block';
+        try { const bb = document.getElementById('bottom-banner'); if (bb) bb.style.display = 'block'; } catch(_) {}
         mapEl.classList.add('transition-fade','fade-in-start');
         loginEl.classList.add('transition-fade','fade-out-start');
         requestAnimationFrame(() => {
@@ -1385,6 +1404,7 @@
       setTimeout(hideSplash, 3000);
     })();
   </script>
+  <div id="bottom-banner"> WELCOME TO TERRAVEST GROUP </div>
 
 </body>
 </html>
