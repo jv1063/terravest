@@ -614,26 +614,7 @@
     })();
   </script>
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js', { scope: './' })
-          .then(reg => {
-            console.log('[PWA] Service worker registered with scope:', reg.scope);
-            navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
-            reg.addEventListener('updatefound', () => {
-              const nw = reg.installing;
-              if (nw) {
-                nw.addEventListener('statechange', () => {
-                  if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('[PWA] New content available; will use on next load.');
-                  }
-                });
-              }
-            });
-          })
-          .catch(err => console.error('[PWA] SW registration failed — check path ./service-worker.js:', err));
-      });
-    }
+    window.addEventListener('load', () => {});
   </script>
 </head>
 <body>
