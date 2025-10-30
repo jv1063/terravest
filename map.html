@@ -8,6 +8,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+  
   <title>Project 369 Map</title>
   <!-- PWA manifest -->
   <link rel="manifest" href="./manifest.json">
@@ -342,7 +343,6 @@
     padding: 12px 24px;
     font-size: 14px;
     font-weight: 700;
-    font-family: 'Poppins', Arial, sans-serif;
     cursor: pointer;
     box-shadow: 0 8px 20px rgba(6, 122, 59, 0.4);
     transition: all 0.3s ease;
@@ -622,8 +622,8 @@
   <div id="login">
     <!-- Video wrapper with background image -->
     <div class="video-wrapper">
-      <video class="login-bg-video" autoplay muted loop playsinline webkit-playsinline preload="auto" poster="assets/background_video_image.png" disablePictureInPicture>
-        <source src="assets/background_video.mp4" type="video/mp4">
+      <video class="login-bg-video" autoplay muted loop playsinline webkit-playsinline preload="auto" poster="assets/background_video_image.png?v=7" disablePictureInPicture>
+        <source src="assets/background_video.mp4?v=7" type="video/mp4">
         <!-- Fallback for browsers that don't support video -->
       </video>
     </div>
@@ -638,7 +638,7 @@
       <div class="auth-card">
         <div class="auth-media" aria-label="Brand video">
           <video id="brand-video" muted playsinline preload="metadata" disablePictureInPicture translate="no">
-            <source src="assets/terravest_logo_video.mp4" type="video/mp4">
+            <source src="assets/terravest_logo_video.mp4?v=7" type="video/mp4">
           </video>
           <h2 class="brand-title">Terravest Group</h2>
           <p class="brand-sub">Secure property dashboard — sign in to continue</p>
@@ -682,6 +682,7 @@
   </noscript>
 
   
+  <script>
   let map;
   let geojsonLayer;
   let autoFitOnLoad = true; // auto-fit to geojson only on first load unless user interacts
@@ -711,118 +712,36 @@
 
   // Play video on page load
   document.addEventListener('DOMContentLoaded', function() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // If iOS, disable heavy videos to avoid layout/perf issues blocking login
+    if (isIOS) {
+      try {
+        const bgVideo = document.querySelector('.login-bg-video');
+        if (bgVideo) { bgVideo.pause?.(); bgVideo.removeAttribute('src'); const s=bgVideo.querySelector('source'); if (s) s.removeAttribute('src'); bgVideo.load?.(); bgVideo.style.display='none'; }
+        const brandVideo = document.getElementById('brand-video');
+        if (brandVideo) { brandVideo.pause?.(); brandVideo.removeAttribute('src'); const s2=brandVideo.querySelector('source'); if (s2) s2.removeAttribute('src'); brandVideo.load?.(); brandVideo.style.display='none'; }
+        const fallback = document.querySelector('.login-bg-fallback'); if (fallback) fallback.style.display='block';
+      } catch(e) { console.warn('iOS video disable error', e); }
+    }
+
+    // Bypass login when ?bypass=1 is present (debug on iOS)
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('bypass') === '1') {
+        const loginEl = document.getElementById('login');
+        const mapEl = document.getElementById('map');
+        if (loginEl && mapEl) {
+          mapEl.style.display = 'block';
+          document.body.style.overflow = '';
+          loginEl.style.display = 'none';
+          initMap();
+          setTimeout(() => { if (map) map.invalidateSize(); }, 250);
+        }
+      }
+    } catch(e) { console.warn('Bypass param check failed', e); }
     setTimeout(playVideoOnce, 500); // small delay to ensure video is ready
     
-    // Debug video wrapper background
-    const videoWrapper = document.querySelector('.video-wrapper');
-    if (videoWrapper) {
-      console.log('✅ Video wrapper found with background image');
-    } else {
-      console.error('❌ Video wrapper not found!');
-    }
-    
-    // Debug and force background video to play
-    const bgVideo = document.querySelector('.login-bg-video');
-    if (bgVideo) {
-      console.log('Background video element found:', bgVideo);
-      
-      // Debug indicator removed after confirming video works
-      
-      // Force video to load with proper MIME type
-      bgVideo.type = 'video/mp4';
-      
-      bgVideo.addEventListener('loadstart', () => {
-        console.log('Background video started loading');
-      });
-      
-      bgVideo.addEventListener('loadeddata', () => {
-        console.log('✅ Background video data loaded');
-        console.log('Video dimensions:', bgVideo.videoWidth, 'x', bgVideo.videoHeight);
-        console.log('Video ready state:', bgVideo.readyState);
-        
-        // Fade in video after it's loaded
-        bgVideo.style.opacity = '1';
-      });
-      
-      bgVideo.addEventListener('canplay', () => {
-        console.log('✅ Background video can play');
-        console.log('Video duration:', bgVideo.duration);
-        
-        // Force play with multiple attempts
-        const playVideo = () => {
-          bgVideo.play().then(() => {
-            console.log('✅ Background video playing successfully');
-            console.log('Video current time:', bgVideo.currentTime);
-          }).catch(e => {
-            console.log('❌ Background video play failed:', e);
-            console.log('Error details:', e.message);
-          });
-        };
-        
-        playVideo();
-        
-        // Try again after user interaction
-        document.addEventListener('click', () => {
-          console.log('User clicked, retrying video play');
-          playVideo();
-        }, { once: true });
-      });
-      
-      bgVideo.addEventListener('error', (e) => {
-        console.error('❌ Background video error:', e);
-        console.log('Video src:', bgVideo.src || bgVideo.querySelector('source')?.src);
-        console.log('Video error details:', bgVideo.error);
-        console.log('Network state:', bgVideo.networkState);
-        console.log('Ready state:', bgVideo.readyState);
-        
-        // Keep the wrapper background image visible if video fails
-        const videoWrapper = document.querySelector('.video-wrapper');
-        if (videoWrapper) {
-          console.log('✅ Keeping wrapper background image visible');
-        }
-        
-        // Show fallback background
-        document.querySelector('.login-bg-fallback').style.display = 'block';
-      });
-      
-      bgVideo.addEventListener('playing', () => {
-        console.log('Background video is now playing');
-        console.log('Video is actually visible:', bgVideo.offsetWidth, 'x', bgVideo.offsetHeight);
-      });
-      
-      // Test if video file is accessible
-      fetch('assets/background_video.mp4', { method: 'HEAD' })
-        .then(response => {
-          console.log('Background video file accessible:', response.ok);
-          console.log('Video file size:', response.headers.get('content-length'));
-          console.log('Video content-type:', response.headers.get('content-type'));
-        })
-        .catch(err => {
-          console.error('Background video file not accessible:', err);
-        });
-      
-      // Force load the video
-      bgVideo.load();
-      
-      // Multiple play attempts with different strategies
-      setTimeout(() => {
-        bgVideo.play().catch(e => {
-          console.log('Initial play attempt failed:', e);
-          // Try setting currentTime and play again
-          bgVideo.currentTime = 0;
-          setTimeout(() => {
-            bgVideo.play().catch(err => {
-              console.log('Second attempt failed:', err);
-              // Try with different approach
-              bgVideo.muted = true;
-              bgVideo.play().catch(finalErr => console.log('Final attempt failed:', finalErr));
-            });
-          }, 500);
-        });
-      }, 1000);
-    } else {
-      console.error('Background video element not found!');
-    }
+    // Keep minimal logic; no verbose debug on production
   });
 
   // === WhatsApp popup helpers ===
