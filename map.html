@@ -29,9 +29,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/app_icon.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/app_icon.png">
   <link rel="shortcut icon" href="assets/app_icon.png" type="image/png">
-  <!-- Absolute paths for GitHub Pages -->
-  <link rel="icon" href="/terravest/assets/app_icon.png" type="image/png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/terravest/assets/app_icon.png">
+  <!-- Absolute paths removed to avoid broken icons on custom domains -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Remixicon for lock icon -->
@@ -1357,6 +1355,23 @@
       document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && map) { try { map.invalidateSize(); } catch(e) {} } });
     });
 
+  </script>
+  <script>
+    (function(){
+      function hideSplash(){
+        var s = document.getElementById('app-splash');
+        if (!s) return;
+        s.classList.add('hidden');
+        setTimeout(function(){ try { s.parentNode && s.parentNode.removeChild(s); } catch(_) {} }, 600);
+      }
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(hideSplash, 600);
+      } else {
+        document.addEventListener('DOMContentLoaded', function(){ setTimeout(hideSplash, 600); });
+      }
+      // Safety: hide even if something blocks earlier events
+      setTimeout(hideSplash, 3000);
+    })();
   </script>
 
 </body>
