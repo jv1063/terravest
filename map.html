@@ -638,7 +638,7 @@
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-media" aria-label="Brand logo">
-          <img class="brand-logo" src="assets/terravest_logo.gif?v=11" alt="Terravest" />
+          <img class="brand-logo" src="assets/terravest_logo.gif?v=11" data-gif="assets/terravest_logo.gif?v=11" data-png="assets/terravest_logo.png?v=11" alt="Terravest" />
           <h2 class="brand-title">Terravest Group</h2>
           <p class="brand-sub">Secure property dashboard — sign in to continue</p>
         </div>
@@ -712,19 +712,31 @@
   // Play video on page load
   document.addEventListener('DOMContentLoaded', function() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    // If iOS, disable heavy videos to avoid layout/perf issues blocking login
-    if (isIOS) {
-      try {
-        const bgVideo = document.querySelector('.login-bg-video');
-        if (bgVideo) { bgVideo.pause?.(); bgVideo.removeAttribute('src'); const s=bgVideo.querySelector('source'); if (s) s.removeAttribute('src'); bgVideo.load?.(); bgVideo.style.display='none'; }
-        const brandVideo = document.getElementById('brand-video');
-        if (brandVideo) { brandVideo.pause?.(); brandVideo.removeAttribute('src'); const s2=brandVideo.querySelector('source'); if (s2) s2.removeAttribute('src'); brandVideo.load?.(); brandVideo.style.display='none'; }
-        const fallback = document.querySelector('.login-bg-fallback'); if (fallback) fallback.style.display='block';
-        const logo = document.querySelector('.brand-logo'); if (logo) logo.style.display='block';
-      } catch(e) { console.warn('iOS video disable error', e); }
-    }
 
-    // Bypass login when ?bypass=1 is present (debug on iOS)
+    // Swap logo format: PNG on iOS (GIF heavy there), GIF elsewhere
+    try {
+      const logo = document.querySelector('.brand-logo');
+      if (logo && logo.dataset) {
+        logo.src = isIOS ? (logo.dataset.png || logo.src) : (logo.dataset.gif || logo.src);
+      }
+    } catch(_) {}
+
+    // Ensure background video plays with poster fallback
+    try {
+      const bgVideo = document.querySelector('.login-bg-video');
+      const fallback = document.querySelector('.login-bg-fallback');
+      if (bgVideo) {
+        bgVideo.muted = true; // required for autoplay on iOS
+        bgVideo.setAttribute('playsinline','');
+        bgVideo.setAttribute('webkit-playsinline','');
+        bgVideo.addEventListener('loadeddata', () => { bgVideo.style.opacity = '1'; if (fallback) fallback.style.display = 'none'; });
+        bgVideo.addEventListener('error', () => { if (fallback) fallback.style.display = 'block'; });
+        // Attempt autoplay; if blocked, it will start after first tap due to muted+playsinline
+        bgVideo.play().catch(() => {});
+      }
+    } catch(_) {}
+
+    // Bypass login when ?bypass=1 is present (debug)
     try {
       const params = new URLSearchParams(location.search);
       if (params.get('bypass') === '1') {
