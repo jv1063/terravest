@@ -713,11 +713,11 @@
   document.addEventListener('DOMContentLoaded', function() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    // Swap logo format: PNG on iOS (GIF heavy there), GIF elsewhere
+    // Always use animated GIF logo
     try {
       const logo = document.querySelector('.brand-logo');
-      if (logo && logo.dataset) {
-        logo.src = isIOS ? (logo.dataset.png || logo.src) : (logo.dataset.gif || logo.src);
+      if (logo && logo.dataset && logo.dataset.gif) {
+        logo.src = logo.dataset.gif;
       }
     } catch(_) {}
 
@@ -769,8 +769,8 @@
 
     if (type === 'wa') {
       const text = encodeURIComponent(msg || 'Hi');
-      appUrl = `whatsapp://send?text=${text}`;
-      webUrl = `https://wa.me/${WA_NUMBER}?text=${text}`;
+      appUrl = `whatsapp://send?phone=${WA_NUMBER}&text=${text}`;
+      webUrl = `https://api.whatsapp.com/send?phone=${WA_NUMBER}&text=${text}`;
     } else if (type === 'maps') {
       if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
         const lat = coords.lat, lng = coords.lng;
