@@ -637,7 +637,6 @@
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-media" aria-label="Brand video">
-          <img src="assets/terravest_logo.png" alt="Terravest" style="width:120px;height:auto;display:block;" />
           <video id="brand-video" muted playsinline preload="metadata" disablePictureInPicture translate="no">
             <source src="assets/terravest_logo_video.mp4" type="video/mp4">
           </video>
@@ -975,6 +974,7 @@
           loginEl.style.display = 'none';
           loginEl.classList.remove('transition-fade','fade-out-start','fade-out-end');
           mapEl.classList.remove('transition-fade','fade-in-end');
+          document.body.style.overflow = '';
           initMap();
           setTimeout(() => { if (map) map.invalidateSize(); }, 250);
         }, 500);
@@ -1326,6 +1326,8 @@
     
     // Event listeners
     document.addEventListener('DOMContentLoaded', function() {
+      // Lock page scroll while login is visible to prevent seeing content under it
+      document.body.style.overflow = 'hidden';
       const listViewBtn = document.getElementById('list-view-btn');
       
       if (listViewBtn) {
