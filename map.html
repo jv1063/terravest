@@ -449,7 +449,8 @@
   .list-popup-content {
     max-height: calc(85vh - 80px);
     overflow-y: auto;
-    padding: 20px;
+    padding: 20px 20px 120px 20px; /* extra bottom space for last card/buttons */
+    scroll-padding-bottom: 120px; /* ensure last item is positioned away from bottom when scrolled */
   }
   
   .property-item {
