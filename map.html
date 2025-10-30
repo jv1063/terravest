@@ -305,6 +305,7 @@
       box-shadow: 0 12px 40px rgba(2,6,23,0.6);
       background: #000;
     }
+    .brand-logo { display: none; width: 160px; height: auto; }
     .brand-title {
       margin: 0;
       font-size: 1.4rem;
@@ -640,6 +641,7 @@
           <video id="brand-video" muted playsinline preload="metadata" disablePictureInPicture translate="no">
             <source src="assets/terravest_logo_video.mp4?v=7" type="video/mp4">
           </video>
+          <img class="brand-logo" src="assets/terravest_logo.png" alt="Terravest" />
           <h2 class="brand-title">Terravest Group</h2>
           <p class="brand-sub">Secure property dashboard — sign in to continue</p>
         </div>
@@ -721,6 +723,7 @@
         const brandVideo = document.getElementById('brand-video');
         if (brandVideo) { brandVideo.pause?.(); brandVideo.removeAttribute('src'); const s2=brandVideo.querySelector('source'); if (s2) s2.removeAttribute('src'); brandVideo.load?.(); brandVideo.style.display='none'; }
         const fallback = document.querySelector('.login-bg-fallback'); if (fallback) fallback.style.display='block';
+        const logo = document.querySelector('.brand-logo'); if (logo) logo.style.display='block';
       } catch(e) { console.warn('iOS video disable error', e); }
     }
 
