@@ -28,31 +28,12 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // 1️⃣ Cache map tiles (Esri, ArcGIS, etc.) for up to 6 months
-  if (url.hostname.includes("arcgisonline") || url.pathname.includes("tile")) {
-    event.respondWith(
-      caches.open("map-tiles").then((cache) =>
-        cache.match(event.request).then((cached) => {
-          const fetchPromise = fetch(event.request)
-            .then((response) => {
-              cache.put(event.request, response.clone());
-              return response;
-            })
-            .catch(() => cached);
-          return cached || fetchPromise;
-        })
-      )
-    );
-    return;
+  // 1️⃣ Never intercept/caches for map tiles or GeoJSON; let network handle directly
+  if (url.href.includes("ArcGIS") || url.hostname.includes("arcgisonline") || url.pathname.includes("tile") || url.pathname.endsWith(".geojson")) {
+    return; // bypass SW, avoids stale/hung promises
   }
 
-  // 2️⃣ Always fetch fresh GeoJSON (property layer)
-  if (url.pathname.endsWith(".geojson")) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // 3️⃣ Cache-first for static assets
+  // 2️⃣ Cache-first for other static assets
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );

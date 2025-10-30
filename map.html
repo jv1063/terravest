@@ -1010,6 +1010,18 @@
       const MAX_Z = 18; // adjust if needed (Esri World Imagery supports up to ~20 but labels/other layers may not)
       map = L.map('map', { minZoom: MIN_Z, maxZoom: MAX_Z }).setView([23.02, 72.30], 13);
 
+      // Loading watchdog: if tiles hang, force a redraw and moveend to keep UI responsive
+      map.on('loading', () => {
+        let watchdog = setTimeout(() => {
+          if (map && map._loading) {
+            console.warn('⚠️ Map load taking too long — forcing redraw');
+            try { map.invalidateSize(); } catch(e) {}
+            try { map.fire('moveend'); } catch(e) {}
+          }
+        }, 8000);
+        map.once('load', () => clearTimeout(watchdog));
+      });
+
       // Create a top pane for labels so they render above the satellite imagery
       map.createPane('labels');
       map.getPane('labels').style.zIndex = 650; // above overlay layers
@@ -1275,9 +1287,7 @@
               <span><strong>Price:</strong> ${escapeHtml(price)}</span>
               <span><strong>Tenure:</strong> ${escapeHtml(tenure)}</span>
             </div>
-            <button class="view-on-map-btn" onclick="zoomToProperty(${index})">
-              🗺️ View on Map
-            </button>
+            <button class="view-on-map-btn" data-index="${index}">View on Map</button>
           </div>
         `;
         
@@ -1286,66 +1296,67 @@
       
       console.log(`✅ Populated list with ${geoJsonData.features.length} properties`);
     }
-    
+
     // Zoom to property on the map
-    function zoomToProperty(index) {
+    async function zoomToProperty(index) {
       if (isZoomingToProperty) return; // debounce
       if (!geoJsonData || !geoJsonData.features || !geoJsonData.features[index]) {
         console.warn('Invalid property index:', index);
         return;
       }
-      
+
       const feature = geoJsonData.features[index];
       const coordinates = getPropertyCoordinates(feature);
-      
-      if (coordinates) {
-        isZoomingToProperty = true;
-        // Temporarily disable all "View on Map" buttons to avoid re-entrancy
-        try {
-          document.querySelectorAll('.view-on-map-btn').forEach(btn => btn.disabled = true);
-        } catch(e) {}
-        // Close the list popup
-        closeListPopup();
-        
-        // Wait a moment for popup to close/animate, then zoom without animation to avoid Edge hangs
-        setTimeout(() => {
-          try {
-            if (map) {
-              // Stop any ongoing animations/moves first
-              if (typeof map.stop === 'function') map.stop();
-              // Ensure map has correct size before moving
-              map.invalidateSize({ debounceMoveend: true });
-              // Non-animated setView is more stable on some mobile browsers/PWAs
-              map.setView([coordinates.lat, coordinates.lng], 16, { animate: false });
-              
-              // Highlight the feature by opening its popup
-              if (geojsonLayer) {
-                let fid = getPropertyValue((feature.properties || {}), ['fid','FID','id']);
-                let opened = false;
-                geojsonLayer.eachLayer(function(layer) {
-                  const lf = layer.feature;
-                  if (lf && (lf === feature || getPropertyValue((lf.properties || {}), ['fid','FID','id']) === fid)) {
-                    if (typeof layer.openPopup === 'function') layer.openPopup();
-                    opened = true;
-                  }
-                });
-                if (!opened) {
-                  const layers = geojsonLayer.getLayers();
-                  const target = layers[index];
-                  if (target && typeof target.openPopup === 'function') target.openPopup();
-                }
-              }
-            }
-          } catch (e) {
-            console.warn('zoomToProperty error:', e);
-          } finally {
-            // Re-enable buttons and release lock
-            try {
-              document.querySelectorAll('.view-on-map-btn').forEach(btn => btn.disabled = false);
-            } catch(e) {}
-            isZoomingToProperty = false;
+      if (!coordinates) return;
+
+      isZoomingToProperty = true;
+      try { document.querySelectorAll('.view-on-map-btn').forEach(btn => btn.disabled = true); } catch(e) {}
+      closeListPopup();
+
+      // Let the modal fully close and a frame render
+      await new Promise(r => setTimeout(r, 400));
+      try {
+        if (map) {
+          if (typeof map.stop === 'function') map.stop();
+          await new Promise(r => requestAnimationFrame(r));
+          map.invalidateSize();
+          await new Promise(r => requestAnimationFrame(r));
+
+          // Use animated move to ensure moveend reliably fires
+          let done = false;
+          const onMoveEnd = () => { done = true; };
+          map.once('moveend', onMoveEnd);
+          map.setView([coordinates.lat, coordinates.lng], 16, { animate: true });
+
+          // Wait for moveend or fallback
+          const start = Date.now();
+          while (!done && Date.now() - start < 900) {
+            await new Promise(r => setTimeout(r, 50));
           }
-        }, 250);
+
+          // Open popup after move completes
+          if (geojsonLayer) {
+            let fid = getPropertyValue((feature.properties || {}), ['fid','FID','id']);
+            let opened = false;
+            geojsonLayer.eachLayer(function(layer) {
+              const lf = layer.feature;
+              if (lf && (lf === feature || getPropertyValue((lf.properties || {}), ['fid','FID','id']) === fid)) {
+                if (typeof layer.openPopup === 'function') layer.openPopup();
+                opened = true;
+              }
+            });
+            if (!opened) {
+              const layers = geojsonLayer.getLayers();
+              const target = layers[index];
+              if (target && typeof target.openPopup === 'function') target.openPopup();
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('zoomToProperty error:', e);
+      } finally {
+        try { document.querySelectorAll('.view-on-map-btn').forEach(btn => btn.disabled = false); } catch(e) {}
+        isZoomingToProperty = false;
       }
     }
     
@@ -1356,7 +1367,9 @@
       if (listViewBtn) {
         listViewBtn.addEventListener('click', openListView);
       }
-      document.addEventListener('click', function(e){ const b = e.target.closest('.view-on-map-btn'); if (b) console.log('View on map clicked'); });
+      document.addEventListener('click', function(e){ const b = e.target.closest('.view-on-map-btn'); if (b) zoomToProperty(parseInt(b.dataset.index)); });
+      // Recover map layout after app resumes from background
+      document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && map) { try { map.invalidateSize(); } catch(e) {} } });
     });
 
   </script>
