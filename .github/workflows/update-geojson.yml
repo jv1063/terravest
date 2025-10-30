@@ -2,88 +2,82 @@ name: Update GeoJSON and Deploy
 
 on:
   push:
+    branches: [ main ]
     paths:
       - 'data/properties.geojson'
       - 'map.html'
+      - '.github/workflows/update-geojson.yml'
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  update-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
-    - name: Validate GeoJSON
-      run: |
-        echo "Validating GeoJSON file..."
-        node -e "
-          const fs = require('fs');
-          const data = JSON.parse(fs.readFileSync('data/properties.geojson', 'utf8'));
-          if (data.type !== 'FeatureCollection') {
-            console.error('❌ Invalid GeoJSON: Must be FeatureCollection');
-            process.exit(1);
-          }
-          if (!Array.isArray(data.features)) {
-            console.error('❌ Invalid GeoJSON: Must have features array');
-            process.exit(1);
-          }
-          console.log('✅ GeoJSON validation passed:', data.features.length, 'features');
-        "
-        
-    - name: Verify external GeoJSON loading
-      run: |
-        echo "Verifying that map.html loads GeoJSON from external file..."
-        node -e "
-          const fs = require('fs');
-          const htmlContent = fs.readFileSync('map.html', 'utf8');
-          
-          // Check that embedded data is removed
-          if (htmlContent.includes('properties-embedded')) {
-            console.error('❌ Embedded GeoJSON data still present in map.html');
-            process.exit(1);
-          }
-          
-          // Check that external loading is implemented
-          if (!htmlContent.includes('data/properties.geojson')) {
-            console.error('❌ External GeoJSON loading not found in map.html');
-            process.exit(1);
-          }
-          
-          console.log('✅ map.html correctly configured for external GeoJSON loading');
-        "
-        
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: .
-        publish_branch: gh-pages
-        keep_files: true
-        
-    - name: Create deployment summary
-      run: |
-        echo "## 🎉 GeoJSON Update Complete!" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### What was updated:" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ GeoJSON data validated" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ External loading verified in map.html" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Changes deployed to GitHub Pages" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### How it works:" >> $GITHUB_STEP_SUMMARY
-        echo "- Map loads data directly from data/properties.geojson" >> $GITHUB_STEP_SUMMARY
-        echo "- No embedded data - always shows latest version" >> $GITHUB_STEP_SUMMARY
-        echo "- Cache busting ensures immediate updates" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Next steps:" >> $GITHUB_STEP_SUMMARY
-        echo "1. Visit your GitHub Pages site" >> $GITHUB_STEP_SUMMARY
-        echo "2. Press Ctrl+Shift+R to refresh and see changes" >> $GITHUB_STEP_SUMMARY
-        echo "3. Verify all properties are displaying correctly" >> $GITHUB_STEP_SUMMARY
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Validate GeoJSON
+        run: |
+          echo "Validating GeoJSON file..."
+          node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('data/properties.geojson', 'utf8'));
+            if (data.type !== 'FeatureCollection') {
+              console.error('❌ Invalid GeoJSON: Must be FeatureCollection');
+              process.exit(1);
+            }
+            if (!Array.isArray(data.features)) {
+              console.error('❌ Invalid GeoJSON: Must have features array');
+              process.exit(1);
+            }
+            console.log('✅ GeoJSON validation passed:', data.features.length, 'features');
+          "
+
+      - name: Verify external GeoJSON loading
+        run: |
+          echo "Verifying that map.html loads GeoJSON from external file..."
+          node -e "
+            const fs = require('fs');
+            const htmlContent = fs.readFileSync('map.html', 'utf8');
+            if (htmlContent.includes('properties-embedded')) {
+              console.error('❌ Embedded GeoJSON data still present in map.html');
+              process.exit(1);
+            }
+            if (!htmlContent.includes('data/properties.geojson')) {
+              console.error('❌ External GeoJSON loading not found in map.html');
+              process.exit(1);
+            }
+            console.log('✅ map.html correctly configured for external GeoJSON loading');
+          "
+
+      - name: Upload artifact for Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
 
