@@ -1,0 +1,21 @@
+# Normalize text files to LF in the repository
+* text=auto eol=lf
+
+# Common text types (explicit)
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+
+# Do not attempt EOL conversion for binary assets
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.gif -text
+*.svg -text
+*.mp4 -text
+*.ico -text
+*.woff -text
+*.woff2 -text
+*.ttf -text

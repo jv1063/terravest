@@ -637,6 +637,7 @@
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-media" aria-label="Brand video">
+          <img src="assets/terravest_logo.png" alt="Terravest" style="width:120px;height:auto;display:block;" />
           <video id="brand-video" muted playsinline preload="metadata" disablePictureInPicture translate="no">
             <source src="assets/terravest_logo_video.mp4" type="video/mp4">
           </video>
@@ -651,7 +652,7 @@
               <path d="M17 8V9H7V8a5 5 0 1 1 10 0Zm-8 0a3 3 0 1 1 6 0V9H9V8ZM6 11h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Zm6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
             </svg>
           </div>
-          <button id="login-btn" type="submit">Sign in</button>
+          <button id="login-btn" type="submit" onclick="checkPasscode(event)">Sign in</button>
           <div id="error" role="status" aria-live="polite"></div>
           <div class="auth-foot">Need help? Contact 917383727206</div>
         </form>
@@ -1295,7 +1296,7 @@
       closeListPopup();
 
       // Let the modal fully close and a frame render
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 350));
       try {
         if (map) {
           if (typeof map.stop === 'function') map.stop();
@@ -1303,41 +1304,23 @@
           map.invalidateSize();
           await new Promise(r => requestAnimationFrame(r));
 
-          // Use animated move to ensure moveend reliably fires
-          let done = false;
-          const onMoveEnd = () => { done = true; };
-          map.once('moveend', onMoveEnd);
-          map.setView([coordinates.lat, coordinates.lng], 16, { animate: true });
+          // Non-animated move to avoid UI locks in PWAs
+          map.setView([coordinates.lat, coordinates.lng], 16, { animate: false });
 
-          // Wait for moveend or fallback
-          const start = Date.now();
-          while (!done && Date.now() - start < 900) {
-            await new Promise(r => setTimeout(r, 50));
-          }
+          // Do NOT open popup automatically; allow user to tap the feature
+          // This avoids layout thrash during transition states
 
-          // Open popup after move completes
-          if (geojsonLayer) {
-            let fid = getPropertyValue((feature.properties || {}), ['fid','FID','id']);
-            let opened = false;
-            geojsonLayer.eachLayer(function(layer) {
-              const lf = layer.feature;
-              if (lf && (lf === feature || getPropertyValue((lf.properties || {}), ['fid','FID','id']) === fid)) {
-                if (typeof layer.openPopup === 'function') layer.openPopup();
-                opened = true;
-              }
-            });
-            if (!opened) {
-              const layers = geojsonLayer.getLayers();
-              const target = layers[index];
-              if (target && typeof target.openPopup === 'function') target.openPopup();
-            }
-          }
+          // Give the map a couple of frames to settle
+          await new Promise(r => setTimeout(r, 150));
         }
       } catch (e) {
         console.warn('zoomToProperty error:', e);
       } finally {
-        try { document.querySelectorAll('.view-on-map-btn').forEach(btn => btn.disabled = false); } catch(e) {}
-        isZoomingToProperty = false;
+        // Hard timeout to ensure UI never stays locked
+        setTimeout(() => {
+          try { document.querySelectorAll('.view-on-map-btn').forEach(btn => btn.disabled = false); } catch(e) {}
+          isZoomingToProperty = false;
+        }, 0);
       }
     }
     
