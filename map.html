@@ -1208,10 +1208,9 @@
     // Open list popup view
     function openListView() {
       document.getElementById('property-list').classList.add('active');
-      // Always populate/refresh the list and focus search
+      // Populate/refresh the list without auto-focusing the search input
       if (geoJsonData) {
         populatePropertyList();
-        try { const s = document.getElementById('property-search'); if (s) { s.focus(); s.select(); } } catch(e) {}
         try { updateListSpacer(); } catch(e) {}
       }
     }
