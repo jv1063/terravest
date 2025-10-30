@@ -699,14 +699,13 @@
     </div>
   </noscript>
 
-
-  <script>
   
   let map;
   let geojsonLayer;
   let autoFitOnLoad = true; // auto-fit to geojson only on first load unless user interacts
   let videoPlayCount = 0; // track how many times video has played
   let geoJsonData = null; // Store GeoJSON data globally for list view
+  let isZoomingToProperty = false; // prevent re-entrant zooms that can lock UI
 
   // Video control - play exactly twice
   function playVideoOnce() {
@@ -1281,6 +1280,7 @@
     
     // Zoom to property on the map
     function zoomToProperty(index) {
+      if (isZoomingToProperty) return; // debounce
       if (!geoJsonData || !geoJsonData.features || !geoJsonData.features[index]) {
         console.warn('Invalid property index:', index);
         return;
@@ -1290,33 +1290,53 @@
       const coordinates = getPropertyCoordinates(feature);
       
       if (coordinates) {
+        isZoomingToProperty = true;
+        // Temporarily disable all "View on Map" buttons to avoid re-entrancy
+        try {
+          document.querySelectorAll('.view-on-map-btn').forEach(btn => btn.disabled = true);
+        } catch(e) {}
         // Close the list popup
         closeListPopup();
         
-        // Wait a moment for popup to close, then zoom
+        // Wait a moment for popup to close/animate, then zoom without animation to avoid Edge hangs
         setTimeout(() => {
-          if (map) {
-            map.setView([coordinates.lat, coordinates.lng], 16);
-            
-            // Highlight the feature by opening its popup
-            if (geojsonLayer) {
-              let fid = getPropertyValue((feature.properties || {}), ['fid','FID','id']);
-              let opened = false;
-              geojsonLayer.eachLayer(function(layer) {
-                const lf = layer.feature;
-                if (lf && (lf === feature || getPropertyValue((lf.properties || {}), ['fid','FID','id']) === fid)) {
-                  layer.openPopup();
-                  opened = true;
+          try {
+            if (map) {
+              // Stop any ongoing animations/moves first
+              if (typeof map.stop === 'function') map.stop();
+              // Ensure map has correct size before moving
+              map.invalidateSize({ debounceMoveend: true });
+              // Non-animated setView is more stable on some mobile browsers/PWAs
+              map.setView([coordinates.lat, coordinates.lng], 16, { animate: false });
+              
+              // Highlight the feature by opening its popup
+              if (geojsonLayer) {
+                let fid = getPropertyValue((feature.properties || {}), ['fid','FID','id']);
+                let opened = false;
+                geojsonLayer.eachLayer(function(layer) {
+                  const lf = layer.feature;
+                  if (lf && (lf === feature || getPropertyValue((lf.properties || {}), ['fid','FID','id']) === fid)) {
+                    if (typeof layer.openPopup === 'function') layer.openPopup();
+                    opened = true;
+                  }
+                });
+                if (!opened) {
+                  const layers = geojsonLayer.getLayers();
+                  const target = layers[index];
+                  if (target && typeof target.openPopup === 'function') target.openPopup();
                 }
-              });
-              if (!opened) {
-                const layers = geojsonLayer.getLayers();
-                const target = layers[index];
-                if (target && target.openPopup) target.openPopup();
               }
             }
+          } catch (e) {
+            console.warn('zoomToProperty error:', e);
+          } finally {
+            // Re-enable buttons and release lock
+            try {
+              document.querySelectorAll('.view-on-map-btn').forEach(btn => btn.disabled = false);
+            } catch(e) {}
+            isZoomingToProperty = false;
           }
-        }, 300);
+        }, 250);
       }
     }
     
