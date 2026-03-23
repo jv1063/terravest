@@ -34,6 +34,9 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Remixicon for lock icon -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css" crossorigin="">
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
     body, html {
@@ -633,6 +636,273 @@
       box-shadow: 0 -4px 16px rgba(0,0,0,0.35);
       display: none; /* hidden on login screen; shown on map */
     }
+
+    /* Village Maps Button */
+    #village-maps-btn {
+      position: absolute;
+      top: 115px;
+      right: 160px;
+      z-index: 1000;
+      background: linear-gradient(180deg, #0a7a3b, #066533);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(6, 122, 59, 0.4);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    #village-maps-btn:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(6, 122, 59, 0.5);
+    }
+    
+    #village-maps-btn:active {
+      transform: translateY(0);
+      filter: brightness(0.95);
+    }
+
+    /* Village Maps Modal */
+    #village-maps-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 1200px;
+      max-height: 90vh;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      z-index: 3000;
+      overflow: hidden;
+      animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    #village-maps-modal.active {
+      display: block;
+    }
+    
+    .village-maps-header {
+      background: linear-gradient(180deg, #0a7a3b, #066533);
+      color: white;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .village-maps-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .close-village-maps-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    
+    .close-village-maps-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: rotate(90deg);
+    }
+    
+    .village-maps-content {
+      display: flex;
+      height: calc(90vh - 80px);
+    }
+    
+    .village-list {
+      width: 300px;
+      min-width: 250px;
+      background: #f8f9fa;
+      border-right: 1px solid #e5e7eb;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    
+    .village-item {
+      padding: 12px 16px;
+      margin: 6px 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+    }
+    
+    .village-item:hover {
+      background: linear-gradient(180deg, #0a7a3b, #066533);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(6, 122, 59, 0.2);
+    }
+    
+    .pdf-viewer-container {
+      flex: 1;
+      position: relative;
+      background: #525659;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    
+    .pdf-watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 48px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.1);
+      pointer-events: none;
+      z-index: 10;
+      white-space: nowrap;
+      letter-spacing: 4px;
+    }
+    
+    .pdf-viewer {
+      flex: 1;
+      overflow: auto;
+      background: #525659;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
+    
+    .pdf-controls {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      border-top: 1px solid #333;
+    }
+    
+    .pdf-controls button {
+      background: linear-gradient(180deg, #0a7a3b, #066533);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .pdf-controls button:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+    
+    .pdf-controls button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    #page-num {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      #village-maps-btn {
+        top: 80px;
+        right: 10px;
+        padding: 10px 16px;
+        font-size: 12px;
+      }
+      
+      #list-view-btn {
+        top: 140px;
+        right: 10px;
+      }
+      
+      #village-maps-modal {
+        width: 95%;
+        max-height: 95vh;
+      }
+      
+      .village-maps-content {
+        flex-direction: column;
+        height: calc(95vh - 80px);
+      }
+      
+      .village-list {
+        width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      
+      .pdf-viewer-container {
+        height: calc(100% - 200px);
+      }
+      
+      .pdf-watermark {
+        font-size: 32px;
+        letter-spacing: 2px;
+      }
+      
+      .pdf-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      
+      .pdf-controls button {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .village-list {
+        max-height: 150px;
+        padding: 12px;
+      }
+      
+      .village-item {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      
+      .pdf-watermark {
+        font-size: 24px;
+      }
+    }
   </style>
   <script>
     (function(){
@@ -711,6 +981,7 @@
 
   <div id="map">
     <button id="list-view-btn">📋 List View</button>
+    <button id="village-maps-btn">🗺️ Village Maps</button>
   </div>
   
   <div id="property-list">
@@ -724,6 +995,75 @@
     <div class="list-popup-content">
       <div id="property-list-content"></div>
       <div id="property-list-spacer" aria-hidden="true"></div>
+    </div>
+  </div>
+  
+  <div id="village-maps-modal">
+    <div class="village-maps-header">
+      <h2 class="village-maps-title">Village Maps</h2>
+      <button class="close-village-maps-btn" onclick="closeVillageMaps()" title="Close">✕</button>
+    </div>
+    <div class="village-maps-content">
+      <div class="village-list">
+        <div class="village-item" onclick="loadVillageMap('andej_sanand')">Andej Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('aniyari_sanand')">Aniyari Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('bakrana_sanand')">Bakrana Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('bhavanpura_sanand')">Bhavanpura Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('bol_sanand')">Bol Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('chandrasan_kadi')">Chandrasan Kadi</div>
+        <div class="village-item" onclick="loadVillageMap('charal_sanand')">Charal Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('chekhla_sanand')">Chekhla Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('chharodi_sanand')">Chharodi Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('daduka_sanand')">Daduka Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('daran_sanand')">Daran Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('dodar_sanand')">Dodar Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('fangdi_sanand')">Fangdi Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('godhavi_sanand')">Godhavi Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('goraj_sanand')">Goraj Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('iyava_sanand')">Iyava Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('jakhwada_viramgam')">Jakhwada Viramgam</div>
+        <div class="village-item" onclick="loadVillageMap('kalana_sanand')">Kalana Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('kaneti_sanand')">Kaneti Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('khicha_sanand')">Khicha Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('khoda_sanand')">Khoda Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('khoraj_sanand')">Khoraj Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('kolat_sanand')">Kolat Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('kundal_sanand')">Kundal Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('kunvar_sanand')">Kunvar Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('lekhamaba_sanand')">Lekhamaba Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('makhiyav_melasana')">Makhiyav Melasana</div>
+        <div class="village-item" onclick="loadVillageMap('mankol_sanand')">Mankol Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('modasar_sanand')">Modasar Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('moti_devti_sanand')">Moti Devti Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('naranpura_sanand')">Naranpura Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('palwada_sanand')">Palwada Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('pipan_sanand')">Pipan Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('rampura_sanand')">Rampura Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('rethal_sanand')">Rethal Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('rupavati_vasodara_sanand')">Rupavati Vasodara Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('sanand_rural')">Sanand Rural</div>
+        <div class="village-item" onclick="loadVillageMap('shiyavada_sanand')">Shiyavada Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('soyia_sanand_sanand')">Soyia Sanand Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('upardal_sanand')">Upardal Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('vasna_iyava_sanand')">Vasna Iyava Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('vasodara_sanand')">Vasodara Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('vinchhiya_sanand')">Vinchhiya Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('virochannagar_sanand')">Virochannagar Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('yashvantpura_sanand')">Yashvantpura Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('zamp_sanand')">Zamp Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('zolapur_sanand')">Zolapur Sanand</div>
+      </div>
+      <div class="pdf-viewer-container" id="pdf-viewer-container" style="display:none;">
+        <div class="pdf-watermark">TERRAVEST GROUP</div>
+        <div id="pdf-viewer" class="pdf-viewer"></div>
+        <div class="pdf-controls">
+          <button onclick="previousPage()" id="prev-btn">‹ Previous</button>
+          <span id="page-num"></span>
+          <button onclick="nextPage()" id="next-btn">Next ›</button>
+          <button onclick="zoomOut()" id="zoom-out-btn">Zoom Out</button>
+          <button onclick="zoomIn()" id="zoom-in-btn">Zoom In</button>
+        </div>
+      </div>
     </div>
   </div>
   
@@ -743,6 +1083,18 @@
   let videoPlayCount = 0; // track how many times video has played
   let geoJsonData = null; // Store GeoJSON data globally for list view
   let isZoomingToProperty = false; // prevent re-entrant zooms that can lock UI
+
+  // PDF.js variables
+  let pdfDoc = null;
+  let pageNum = 1;
+  let pageRendering = false;
+  let pageNumPending = null;
+  let scale = 1.2;
+  let canvas = null;
+  let ctx = null;
+
+  // Set PDF.js worker
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   window.addEventListener('error', (e) => console.error('Global error:', e.message));
   window.addEventListener('unhandledrejection', (e) => console.error('Unhandled promise:', e.reason));
@@ -1384,7 +1736,141 @@
       document.addEventListener('click', function(e){ const b = e.target.closest('.view-on-map-btn'); if (b) zoomToProperty(parseInt(b.dataset.index)); });
       // Recover map layout after app resumes from background
       document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && map) { try { map.invalidateSize(); } catch(e) {} } });
+
+      // Village Maps button event listener
+      const villageMapsBtn = document.getElementById('village-maps-btn');
+      if (villageMapsBtn) {
+        villageMapsBtn.addEventListener('click', openVillageMaps);
+      }
+
+      // Disable right-click on PDF viewer
+      document.addEventListener('contextmenu', function(e) {
+        const pdfViewer = document.getElementById('pdf-viewer-container');
+        if (pdfViewer && pdfViewer.style.display !== 'none' && pdfViewer.contains(e.target)) {
+          e.preventDefault();
+          return false;
+        }
+      });
+
+      // Disable keyboard shortcuts for PDF viewer
+      document.addEventListener('keydown', function(e) {
+        const pdfViewer = document.getElementById('pdf-viewer-container');
+        if (pdfViewer && pdfViewer.style.display !== 'none') {
+          // Block Ctrl+S, Ctrl+P, Print Screen, etc.
+          if ((e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'a')) || e.key === 'PrintScreen') {
+            e.preventDefault();
+            return false;
+          }
+        }
+      });
     });
+
+    // === Village Maps Functions ===
+    
+    function openVillageMaps() {
+      document.getElementById('village-maps-modal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeVillageMaps() {
+      document.getElementById('village-maps-modal').classList.remove('active');
+      document.body.style.overflow = '';
+      // Clear PDF viewer
+      const pdfViewer = document.getElementById('pdf-viewer-container');
+      const viewer = document.getElementById('pdf-viewer');
+      if (pdfViewer) pdfViewer.style.display = 'none';
+      if (viewer) viewer.innerHTML = '';
+      pdfDoc = null;
+      pageNum = 1;
+    }
+
+    function loadVillageMap(villageName) {
+      const pdfUrl = `https://pub-5d90dd0566d24c3d8412287f05e273da.r2.dev/${villageName}.pdf`;
+      const pdfViewer = document.getElementById('pdf-viewer-container');
+      const viewer = document.getElementById('pdf-viewer');
+      
+      // Show PDF viewer
+      pdfViewer.style.display = 'flex';
+      viewer.innerHTML = '<canvas id="pdf-canvas"></canvas>';
+      
+      // Initialize canvas
+      canvas = document.getElementById('pdf-canvas');
+      ctx = canvas.getContext('2d');
+      
+      // Load PDF
+      pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
+        pdfDoc = pdfDoc_;
+        document.getElementById('page-num').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+        
+        // Render first page
+        renderPage(pageNum);
+      }).catch(function(error) {
+        console.error('Error loading PDF:', error);
+        viewer.innerHTML = '<div style="color:white;text-align:center;padding:50px;">Error loading PDF. Please try again later.</div>';
+      });
+    }
+
+    function renderPage(num) {
+      pageRendering = true;
+      
+      pdfDoc.getPage(num).then(function(page) {
+        const viewport = page.getViewport({scale: scale});
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+        
+        const renderTask = page.render(renderContext);
+
+        renderTask.promise.then(function() {
+          pageRendering = false;
+          if (pageNumPending !== null) {
+            renderPage(pageNumPending);
+            pageNumPending = null;
+          }
+        });
+      });
+
+      // Update page counters
+      document.getElementById('page-num').textContent = `Page ${num} of ${pdfDoc.numPages}`;
+      
+      // Update button states
+      document.getElementById('prev-btn').disabled = num <= 1;
+      document.getElementById('next-btn').disabled = num >= pdfDoc.numPages;
+    }
+
+    function queueRenderPage(num) {
+      if (pageRendering) {
+        pageNumPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+
+    function previousPage() {
+      if (pageNum <= 1) return;
+      pageNum--;
+      queueRenderPage(pageNum);
+    }
+
+    function nextPage() {
+      if (pageNum >= pdfDoc.numPages) return;
+      pageNum++;
+      queueRenderPage(pageNum);
+    }
+
+    function zoomIn() {
+      scale = Math.min(scale + 0.2, 3.0);
+      queueRenderPage(pageNum);
+    }
+
+    function zoomOut() {
+      scale = Math.max(scale - 0.2, 0.5);
+      queueRenderPage(pageNum);
+    }
 
   </script>
   <script>
