@@ -669,6 +669,15 @@
       filter: brightness(0.95);
     }
 
+    /* Keep top action buttons identical size */
+    #list-view-btn,
+    #village-maps-btn {
+      width: 150px;
+      justify-content: center;
+      box-sizing: border-box;
+      white-space: nowrap;
+    }
+
     /* Village Maps Modal */
     #village-maps-modal {
       display: none;
@@ -882,8 +891,13 @@
       
       .village-list {
         width: 100%;
-        max-height: 200px;
+        height: 100%;
+        max-height: none;
         border-right: none;
+        border-bottom: none;
+      }
+      .village-maps-content.pdf-open .village-list {
+        max-height: 200px;
         border-bottom: 1px solid #e5e7eb;
       }
       
@@ -909,8 +923,12 @@
 
     @media (max-width: 480px) {
       .village-list {
-        max-height: 150px;
+        height: 100%;
+        max-height: none;
         padding: 12px;
+      }
+      .village-maps-content.pdf-open .village-list {
+        max-height: 150px;
       }
       
       .village-item {
@@ -1129,6 +1147,7 @@
   const MIN_TOUCH_SCALE = 1;
   const MAX_TOUCH_SCALE = 4;
   const MAX_OUTPUT_DPR = 2;
+  const VILLAGE_PDF_BASE_URL = 'https://pub-5d90dd0566d24c3d8412287f05e273da.r2.dev';
 
   // Set PDF.js worker
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1830,10 +1849,27 @@
     }
 
     function loadVillageMap(villageName) {
-      const pdfUrl = `https://pub-5d90dd0566d24c3d8412287f05e273da.r2.dev/${villageName}.pdf`;
+      const pdfUrl = `${VILLAGE_PDF_BASE_URL}/${villageName}.pdf`;
       const pdfViewer = document.getElementById('pdf-viewer-container');
       const viewer = document.getElementById('pdf-viewer');
       const contentWrap = document.querySelector('.village-maps-content');
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+      const isIOSSafari = isIOS && isSafari;
+
+      // iOS Safari handles PDFs better in a new tab; keep list visible (no blank PDF area).
+      if (isIOSSafari) {
+        if (contentWrap) contentWrap.classList.remove('pdf-open');
+        if (pdfViewer) pdfViewer.style.display = 'none';
+        setMapInteractionEnabled(true);
+        try {
+          window.open(pdfUrl, '_blank');
+        } catch (_) {
+          window.location.href = pdfUrl;
+        }
+        return;
+      }
       
       // Show PDF viewer
       pdfViewer.style.display = 'flex';
@@ -1992,11 +2028,13 @@
     function setupPdfTouchInteractions() {
       const stage = document.getElementById('pdf-stage');
       if (!stage) return;
+      let moved = false;
 
       stage.onpointerdown = function(e) {
         e.preventDefault();
         e.stopPropagation();
         stopInertia();
+        moved = false;
         stage.setPointerCapture(e.pointerId);
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (activePointers.size === 1) {
@@ -2032,6 +2070,7 @@
         }
         if (activePointers.size === 1 && pdfTransformScale >= 1) {
           const nowTs = performance.now();
+          if (Math.abs(e.clientX - lastMoveX) > 3 || Math.abs(e.clientY - lastMoveY) > 3) moved = true;
           pdfPanX = e.clientX - panStartX;
           pdfPanY = e.clientY - panStartY;
           const dt = Math.max(nowTs - lastMoveTs, 16);
@@ -2050,14 +2089,14 @@
         if (activePointers.size === 0) {
           stage.classList.remove('dragging');
           const now = Date.now();
-          if (e.pointerType === 'touch' && (now - lastTapAt) < 280) {
+          if (e.pointerType === 'touch' && !moved && (now - lastTapAt) < 280) {
             pdfTransformScale = pdfTransformScale > 1.2 ? 1 : 2;
             pdfPanX = 0;
             pdfPanY = 0;
             applyPdfTransform();
             lastTapAt = 0;
           } else {
-            lastTapAt = now;
+            if (!moved) lastTapAt = now;
             if (Math.abs(panVelocityX) > 0.2 || Math.abs(panVelocityY) > 0.2) {
               startInertia();
             }
