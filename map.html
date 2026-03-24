@@ -730,6 +730,13 @@
       display: flex;
       height: calc(90vh - 80px);
     }
+    .village-maps-content.pdf-open .village-list {
+      display: none;
+    }
+    .village-maps-content.pdf-open .pdf-viewer-container {
+      width: 100%;
+      height: 100%;
+    }
     
     .village-list {
       width: 300px;
@@ -788,12 +795,24 @@
     
     .pdf-viewer {
       flex: 1;
-      overflow: auto;
+      overflow: hidden;
       background: #525659;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-      padding: 20px;
+      align-items: center;
+      padding: 10px;
+    }
+    #pdf-stage {
+      touch-action: none;
+      transform-origin: center center;
+      will-change: transform;
+      cursor: grab;
+    }
+    #pdf-stage.dragging {
+      cursor: grabbing;
+    }
+    #pdf-canvas {
+      display: block;
     }
     
     .pdf-controls {
@@ -1089,9 +1108,27 @@
   let pageNum = 1;
   let pageRendering = false;
   let pageNumPending = null;
-  let scale = 1.2;
+  let scale = 1;
   let canvas = null;
   let ctx = null;
+  let activePointers = new Map();
+  let pdfTransformScale = 1;
+  let pdfPanX = 0;
+  let pdfPanY = 0;
+  let pinchStartDistance = 0;
+  let pinchStartScale = 1;
+  let panStartX = 0;
+  let panStartY = 0;
+  let lastTapAt = 0;
+  let panVelocityX = 0;
+  let panVelocityY = 0;
+  let lastMoveTs = 0;
+  let lastMoveX = 0;
+  let lastMoveY = 0;
+  let inertiaFrame = null;
+  const MIN_TOUCH_SCALE = 1;
+  const MAX_TOUCH_SCALE = 4;
+  const MAX_OUTPUT_DPR = 2;
 
   // Set PDF.js worker
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1778,24 +1815,38 @@
       // Clear PDF viewer
       const pdfViewer = document.getElementById('pdf-viewer-container');
       const viewer = document.getElementById('pdf-viewer');
+      const contentWrap = document.querySelector('.village-maps-content');
+      if (contentWrap) contentWrap.classList.remove('pdf-open');
       if (pdfViewer) pdfViewer.style.display = 'none';
       if (viewer) viewer.innerHTML = '';
+      setMapInteractionEnabled(true);
       pdfDoc = null;
       pageNum = 1;
+      pageNumPending = null;
+      pageRendering = false;
+      activePointers.clear();
+      stopInertia();
+      resetPdfTransform();
     }
 
     function loadVillageMap(villageName) {
       const pdfUrl = `https://pub-5d90dd0566d24c3d8412287f05e273da.r2.dev/${villageName}.pdf`;
       const pdfViewer = document.getElementById('pdf-viewer-container');
       const viewer = document.getElementById('pdf-viewer');
+      const contentWrap = document.querySelector('.village-maps-content');
       
       // Show PDF viewer
       pdfViewer.style.display = 'flex';
-      viewer.innerHTML = '<canvas id="pdf-canvas"></canvas>';
+      if (contentWrap) contentWrap.classList.add('pdf-open');
+      setMapInteractionEnabled(false);
+      viewer.innerHTML = '<div id="pdf-stage"><canvas id="pdf-canvas"></canvas></div>';
       
       // Initialize canvas
       canvas = document.getElementById('pdf-canvas');
       ctx = canvas.getContext('2d');
+      scale = 1;
+      resetPdfTransform();
+      setupPdfTouchInteractions();
       
       // Load PDF
       pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
@@ -1814,13 +1865,22 @@
       pageRendering = true;
       
       pdfDoc.getPage(num).then(function(page) {
-        const viewport = page.getViewport({scale: scale});
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+        const viewer = document.getElementById('pdf-viewer');
+        const availableWidth = Math.max((viewer ? viewer.clientWidth : 900) - 20, 320);
+        const fitScale = availableWidth / page.getViewport({ scale: 1 }).width;
+        const viewport = page.getViewport({ scale: fitScale * scale });
+        const outputScale = Math.min(window.devicePixelRatio || 1, MAX_OUTPUT_DPR);
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const renderContext = {
           canvasContext: ctx,
-          viewport: viewport
+          viewport: viewport,
+          transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
         };
         
         const renderTask = page.render(renderContext);
@@ -1863,13 +1923,159 @@
     }
 
     function zoomIn() {
-      scale = Math.min(scale + 0.2, 3.0);
+      scale = Math.min(scale + 0.2, 4.0);
+      resetPdfTransform();
       queueRenderPage(pageNum);
     }
 
     function zoomOut() {
-      scale = Math.max(scale - 0.2, 0.5);
+      scale = Math.max(scale - 0.2, 1.0);
+      resetPdfTransform();
       queueRenderPage(pageNum);
+    }
+
+    function resetPdfTransform() {
+      pdfTransformScale = 1;
+      pdfPanX = 0;
+      pdfPanY = 0;
+      applyPdfTransform();
+    }
+
+    function applyPdfTransform() {
+      const stage = document.getElementById('pdf-stage');
+      if (!stage) return;
+      stage.style.transform = `translate(${pdfPanX}px, ${pdfPanY}px) scale(${pdfTransformScale})`;
+    }
+
+    function stopInertia() {
+      if (inertiaFrame) {
+        cancelAnimationFrame(inertiaFrame);
+        inertiaFrame = null;
+      }
+    }
+
+    function startInertia() {
+      stopInertia();
+      function step() {
+        panVelocityX *= 0.92;
+        panVelocityY *= 0.92;
+        if (Math.abs(panVelocityX) < 0.05 && Math.abs(panVelocityY) < 0.05) {
+          stopInertia();
+          return;
+        }
+        pdfPanX += panVelocityX;
+        pdfPanY += panVelocityY;
+        applyPdfTransform();
+        inertiaFrame = requestAnimationFrame(step);
+      }
+      inertiaFrame = requestAnimationFrame(step);
+    }
+
+    function setMapInteractionEnabled(enabled) {
+      if (!map) return;
+      const fn = enabled ? 'enable' : 'disable';
+      try { map.dragging[fn](); } catch(_) {}
+      try { map.touchZoom[fn](); } catch(_) {}
+      try { map.scrollWheelZoom[fn](); } catch(_) {}
+      try { map.doubleClickZoom[fn](); } catch(_) {}
+      try { map.boxZoom[fn](); } catch(_) {}
+      try { map.keyboard[fn](); } catch(_) {}
+      try { if (enabled) map.tap.enable(); else map.tap.disable(); } catch(_) {}
+    }
+
+    function getDistance(p1, p2) {
+      const dx = p1.x - p2.x;
+      const dy = p1.y - p2.y;
+      return Math.sqrt((dx * dx) + (dy * dy));
+    }
+
+    function setupPdfTouchInteractions() {
+      const stage = document.getElementById('pdf-stage');
+      if (!stage) return;
+
+      stage.onpointerdown = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        stopInertia();
+        stage.setPointerCapture(e.pointerId);
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (activePointers.size === 1) {
+          panStartX = e.clientX - pdfPanX;
+          panStartY = e.clientY - pdfPanY;
+          lastMoveX = e.clientX;
+          lastMoveY = e.clientY;
+          lastMoveTs = performance.now();
+          panVelocityX = 0;
+          panVelocityY = 0;
+          stage.classList.add('dragging');
+        } else if (activePointers.size === 2) {
+          const pts = Array.from(activePointers.values());
+          pinchStartDistance = getDistance(pts[0], pts[1]);
+          pinchStartScale = pdfTransformScale;
+        }
+      };
+
+      stage.onpointermove = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!activePointers.has(e.pointerId)) return;
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (activePointers.size === 2) {
+          const pts = Array.from(activePointers.values());
+          const dist = getDistance(pts[0], pts[1]);
+          if (pinchStartDistance > 0) {
+            const nextScale = pinchStartScale * (dist / pinchStartDistance);
+            pdfTransformScale = Math.max(MIN_TOUCH_SCALE, Math.min(MAX_TOUCH_SCALE, nextScale));
+            applyPdfTransform();
+          }
+          return;
+        }
+        if (activePointers.size === 1 && pdfTransformScale >= 1) {
+          const nowTs = performance.now();
+          pdfPanX = e.clientX - panStartX;
+          pdfPanY = e.clientY - panStartY;
+          const dt = Math.max(nowTs - lastMoveTs, 16);
+          panVelocityX = (e.clientX - lastMoveX) / (dt / 16);
+          panVelocityY = (e.clientY - lastMoveY) / (dt / 16);
+          lastMoveX = e.clientX;
+          lastMoveY = e.clientY;
+          lastMoveTs = nowTs;
+          applyPdfTransform();
+        }
+      };
+
+      function stopPointer(e) {
+        activePointers.delete(e.pointerId);
+        if (activePointers.size < 2) pinchStartDistance = 0;
+        if (activePointers.size === 0) {
+          stage.classList.remove('dragging');
+          const now = Date.now();
+          if (e.pointerType === 'touch' && (now - lastTapAt) < 280) {
+            pdfTransformScale = pdfTransformScale > 1.2 ? 1 : 2;
+            pdfPanX = 0;
+            pdfPanY = 0;
+            applyPdfTransform();
+            lastTapAt = 0;
+          } else {
+            lastTapAt = now;
+            if (Math.abs(panVelocityX) > 0.2 || Math.abs(panVelocityY) > 0.2) {
+              startInertia();
+            }
+          }
+        }
+      }
+
+      stage.onpointerup = stopPointer;
+      stage.onpointercancel = stopPointer;
+      stage.onpointerleave = stopPointer;
+      stage.onwheel = function(e) {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const delta = e.deltaY < 0 ? 0.12 : -0.12;
+        pdfTransformScale = Math.max(MIN_TOUCH_SCALE, Math.min(MAX_TOUCH_SCALE, pdfTransformScale + delta));
+        applyPdfTransform();
+      };
     }
 
   </script>
