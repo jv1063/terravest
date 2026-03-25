@@ -1820,67 +1820,100 @@
       setMapInteractionEnabled(true);
     }
 
+    function getVillageImageUrl(villageName, isMobile) {
+      const standardUrl = `${IMAGE_BASE_URL}/${villageName}.jpg`;
+      const mobileUrl = `${IMAGE_BASE_URL}/${villageName}_mobile.jpg`;
+      return isMobile ? mobileUrl : standardUrl;
+    }
+
     function loadVillageMap(villageName) {
-      // Lazy load: only load when clicked
-      const imageUrl = `${IMAGE_BASE_URL}/${villageName}.jpg`;
-      
+      const isMobile = window.innerWidth <= 768 || /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
+      const fallbackUrl = `${IMAGE_BASE_URL}/${villageName}.jpg`;
+      let selectedImageUrl = getVillageImageUrl(villageName, isMobile);
+
+      console.log('📍 loadVillageMap', villageName, 'mobile=', isMobile, 'url=', selectedImageUrl);
+
       // Show viewer container
       const container = document.getElementById('image-viewer-container');
       if (container) {
         container.classList.add('active');
       }
-      
+
       // Show loading spinner
       const loadingSpinner = document.getElementById('loading-spinner');
       if (loadingSpinner) {
         loadingSpinner.classList.remove('hidden');
       }
-      
+
       // Disable map interaction
       setMapInteractionEnabled(false);
-      
+
       // Destroy previous viewer if exists
       if (viewer) {
         viewer.destroy();
         viewer = null;
       }
-      
-      // Initialize OpenSeadragon viewer
+
       viewer = OpenSeadragon({
         id: 'openseadragon-viewer',
         prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
         tileSources: {
           type: 'image',
-          url: imageUrl
+          url: selectedImageUrl
         },
-        showNavigator: true,
-        maxZoomPixelRatio: 2,
-        zoomPerScroll: 1.2,
+        showNavigationControl: true,
+        showNavigator: !isMobile,
+        navigatorSizeRatio: isMobile ? 0.12 : 0.20,
+        maxZoomPixelRatio: isMobile ? 1.5 : 2,
+        zoomPerScroll: isMobile ? 1.1 : 1.2,
         constrainDuringPan: true,
         minZoomLevel: 1,
-        visibilityRatio: 1,
+        visibilityRatio: isMobile ? 0.8 : 1,
         springStiffness: 6.5,
-        animationTime: 0.5
+        animationTime: 0.4,
+        gestureSettingsTouch: {
+          scrollToZoom: true,
+          clickToZoom: true,
+          pinchToZoom: true,
+          flickEnabled: true,
+          pinchRotate: false
+        },
+        autoHideControls: true,
+        preserveViewport: true,
+        useCanvas: true
       });
-      
+
       viewer.addOnceHandler('tile-drawn', function() {
-        console.log('✅ Image loaded:', villageName);
-        // Hide loading spinner when image finishes loading
+        console.log('✅ Image loaded:', villageName, selectedImageUrl);
         const loadingSpinner = document.getElementById('loading-spinner');
         if (loadingSpinner) {
           loadingSpinner.classList.add('hidden');
         }
       });
-      
+
+      let fallbackTried = false;
+
       viewer.addHandler('canvas-error', function(error) {
-        console.error('❌ Error loading image:', villageName, error);
+        console.error('❌ Error loading image:', villageName, selectedImageUrl, error);
+
+        if (!fallbackTried && selectedImageUrl !== fallbackUrl) {
+          fallbackTried = true;
+          selectedImageUrl = fallbackUrl;
+          console.warn('↪️ Fallback to high-res image URL for mobile/old path:', fallbackUrl);
+          if (viewer) {
+            viewer.open({ type: 'image', url: selectedImageUrl });
+            return;
+          }
+        }
+
         const viewerDiv = document.getElementById('openseadragon-viewer');
         const loadingSpinner = document.getElementById('loading-spinner');
         if (loadingSpinner) {
           loadingSpinner.classList.add('hidden');
         }
+
         if (viewerDiv) {
-          viewerDiv.innerHTML = '<div style="color:white;text-align:center;padding:50px;display:flex;align-items:center;justify-content:center;height:100%;">Error loading map image. Please try again.</div>';
+          viewerDiv.innerHTML = '<div style="color:white;text-align:center;padding:50px;display:flex;align-items:center;justify-content:center;height:100%;">Error loading map image. Please try again or use a faster network.</div>';
         }
       });
     }
