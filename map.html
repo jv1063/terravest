@@ -32,11 +32,10 @@
   <!-- Absolute paths removed to avoid broken icons on custom domains -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Remixicon for lock icon -->
+  <!-- Remixicon for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css" crossorigin="">
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
+  <!-- OpenSeadragon -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
     body, html {
@@ -682,31 +681,28 @@
     #village-maps-modal {
       display: none;
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 1200px;
-      max-height: 90vh;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: white;
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       z-index: 3000;
       overflow: hidden;
-      animation: modalSlideIn 0.3s ease-out;
     }
     
     #village-maps-modal.active {
-      display: block;
+      display: flex;
+      flex-direction: column;
     }
     
     .village-maps-header {
       background: linear-gradient(180deg, #0a7a3b, #066533);
       color: white;
-      padding: 20px 24px;
+      padding: 16px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-shrink: 0;
     }
     
     .village-maps-title {
@@ -737,14 +733,8 @@
     
     .village-maps-content {
       display: flex;
-      height: calc(90vh - 80px);
-    }
-    .village-maps-content.pdf-open .village-list {
-      display: none;
-    }
-    .village-maps-content.pdf-open .pdf-viewer-container {
-      width: 100%;
-      height: 100%;
+      flex: 1;
+      overflow: hidden;
     }
     
     .village-list {
@@ -767,6 +757,7 @@
       font-size: 14px;
       font-weight: 500;
       color: #374151;
+      user-select: none;
     }
     
     .village-item:hover {
@@ -776,11 +767,12 @@
       box-shadow: 0 4px 12px rgba(6, 122, 59, 0.2);
     }
     
-    .pdf-viewer-container {
+    /* Image Viewer Container */
+    .image-viewer-container {
       flex: 1;
       position: relative;
       background: #525659;
-      display: flex;
+      display: none;
       flex-direction: column;
       user-select: none;
       -webkit-user-select: none;
@@ -788,7 +780,17 @@
       -ms-user-select: none;
     }
     
-    .pdf-watermark {
+    .image-viewer-container.active {
+      display: flex;
+    }
+    
+    #openseadragon-viewer {
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    /* Watermark */
+    .image-watermark {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -802,67 +804,36 @@
       letter-spacing: 4px;
     }
     
-    .pdf-viewer {
-      flex: 1;
-      overflow: hidden;
-      background: #525659;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 10px;
-    }
-    #pdf-stage {
-      touch-action: none;
-      transform-origin: center center;
-      will-change: transform;
-      cursor: grab;
-    }
-    #pdf-stage.dragging {
-      cursor: grabbing;
-    }
-    #pdf-canvas {
-      display: block;
-    }
-    
-    .pdf-controls {
-      background: rgba(0, 0, 0, 0.8);
-      padding: 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-      border-top: 1px solid #333;
-    }
-    
-    .pdf-controls button {
+    /* Back Button */
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 500;
       background: linear-gradient(180deg, #0a7a3b, #066533);
       color: white;
       border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-    
-    .pdf-controls button:hover {
-      filter: brightness(1.1);
-      transform: translateY(-1px);
-    }
-    
-    .pdf-controls button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    #page-num {
-      color: white;
+      border-radius: 50px;
+      padding: 12px 18px;
       font-size: 14px;
-      font-weight: 600;
-      min-width: 60px;
-      text-align: center;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(6, 122, 59, 0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .back-button:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(6, 122, 59, 0.4);
+    }
+    
+    .back-button:active {
+      transform: translateY(0);
+      filter: brightness(0.95);
     }
 
     /* Mobile Responsive */
@@ -879,55 +850,37 @@
         right: 10px;
       }
       
-      #village-maps-modal {
-        width: 95%;
-        max-height: 95vh;
-      }
-      
       .village-maps-content {
         flex-direction: column;
-        height: calc(95vh - 80px);
       }
       
       .village-list {
         width: 100%;
-        height: 100%;
-        max-height: none;
-        border-right: none;
-        border-bottom: none;
-      }
-      .village-maps-content.pdf-open .village-list {
+        height: auto;
         max-height: 200px;
+        border-right: none;
         border-bottom: 1px solid #e5e7eb;
       }
       
-      .pdf-viewer-container {
-        height: calc(100% - 200px);
+      .image-viewer-container {
+        flex: 1;
       }
       
-      .pdf-watermark {
+      .image-watermark {
         font-size: 32px;
         letter-spacing: 2px;
       }
       
-      .pdf-controls {
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      
-      .pdf-controls button {
-        padding: 6px 12px;
+      .back-button {
+        padding: 10px 14px;
         font-size: 12px;
+        top: 12px;
+        left: 12px;
       }
     }
 
     @media (max-width: 480px) {
       .village-list {
-        height: 100%;
-        max-height: none;
-        padding: 12px;
-      }
-      .village-maps-content.pdf-open .village-list {
         max-height: 150px;
       }
       
@@ -936,7 +889,7 @@
         font-size: 13px;
       }
       
-      .pdf-watermark {
+      .image-watermark {
         font-size: 24px;
       }
     }
@@ -1042,8 +995,8 @@
     </div>
     <div class="village-maps-content">
       <div class="village-list">
-        <div class="village-item" onclick="loadVillageMap('andej_sanand')">Andej Sanand</div>
-        <div class="village-item" onclick="loadVillageMap('aniyari_sanand')">Aniyari Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('andej_sanand1')">Andej Sanand</div>
+        <div class="village-item" onclick="loadVillageMap('aniyari_sanand1')">Aniyari Sanand</div>
         <div class="village-item" onclick="loadVillageMap('bakrana_sanand')">Bakrana Sanand</div>
         <div class="village-item" onclick="loadVillageMap('bhavanpura_sanand')">Bhavanpura Sanand</div>
         <div class="village-item" onclick="loadVillageMap('bol_sanand')">Bol Sanand</div>
@@ -1090,16 +1043,10 @@
         <div class="village-item" onclick="loadVillageMap('zamp_sanand')">Zamp Sanand</div>
         <div class="village-item" onclick="loadVillageMap('zolapur_sanand')">Zolapur Sanand</div>
       </div>
-      <div class="pdf-viewer-container" id="pdf-viewer-container" style="display:none;">
-        <div class="pdf-watermark">TERRAVEST GROUP</div>
-        <div id="pdf-viewer" class="pdf-viewer"></div>
-        <div class="pdf-controls">
-          <button onclick="previousPage()" id="prev-btn">‹ Previous</button>
-          <span id="page-num"></span>
-          <button onclick="nextPage()" id="next-btn">Next ›</button>
-          <button onclick="zoomOut()" id="zoom-out-btn">Zoom Out</button>
-          <button onclick="zoomIn()" id="zoom-in-btn">Zoom In</button>
-        </div>
+      <div class="image-viewer-container" id="image-viewer-container">
+        <button class="back-button" onclick="closeImageViewer()">← Back</button>
+        <div class="image-watermark">VASTU PERFECT PROPERTIES</div>
+        <div id="openseadragon-viewer"></div>
       </div>
     </div>
   </div>
@@ -1116,41 +1063,19 @@
   <script>
   let map;
   let geojsonLayer;
-  let autoFitOnLoad = true; // auto-fit to geojson only on first load unless user interacts
-  let videoPlayCount = 0; // track how many times video has played
-  let geoJsonData = null; // Store GeoJSON data globally for list view
-  let isZoomingToProperty = false; // prevent re-entrant zooms that can lock UI
-
-  // PDF.js variables
-  let pdfDoc = null;
-  let pageNum = 1;
-  let pageRendering = false;
-  let pageNumPending = null;
-  let scale = 1;
-  let canvas = null;
-  let ctx = null;
-  let activePointers = new Map();
-  let pdfTransformScale = 1;
-  let pdfPanX = 0;
-  let pdfPanY = 0;
-  let pinchStartDistance = 0;
-  let pinchStartScale = 1;
-  let panStartX = 0;
-  let panStartY = 0;
-  let lastTapAt = 0;
-  let panVelocityX = 0;
-  let panVelocityY = 0;
-  let lastMoveTs = 0;
-  let lastMoveX = 0;
-  let lastMoveY = 0;
-  let inertiaFrame = null;
-  const MIN_TOUCH_SCALE = 1;
-  const MAX_TOUCH_SCALE = 4;
-  const MAX_OUTPUT_DPR = 2;
-  const VILLAGE_PDF_BASE_URL = 'https://pub-5d90dd0566d24c3d8412287f05e273da.r2.dev';
-
-  // Set PDF.js worker
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  let autoFitOnLoad = true;
+  let videoPlayCount = 0;
+  let geoJsonData = null;
+  let isZoomingToProperty = false;
+  
+  // OpenSeadragon viewer instance
+  let viewer = null;
+  
+  // Image base URL
+  const IMAGE_BASE_URL = 'https://pub-5d90dd0566d24c3d8412287f05e273da.r2.dev';
+  
+  // WhatsApp number
+  const WA_NUMBER = '917383727206';
 
   window.addEventListener('error', (e) => console.error('Global error:', e.message));
   window.addEventListener('unhandledrejection', (e) => console.error('Unhandled promise:', e.reason));
@@ -1217,13 +1142,8 @@
         }
       }
     } catch(e) { console.warn('Bypass param check failed', e); }
-    setTimeout(playVideoOnce, 500); // small delay to ensure video is ready
-    
-    // Keep minimal logic; no verbose debug on production
+    setTimeout(playVideoOnce, 500);
   });
-
-  // === WhatsApp popup helpers ===
-  const WA_NUMBER = '917383727206'; // phone number in international format (no + or 00)
 
   // Open external in the native app without spawning a visible new tab
   function openExternal(type, coords, msg) {
@@ -1240,8 +1160,8 @@
     } else if (type === 'maps') {
       if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
         const lat = coords.lat, lng = coords.lng;
-        if (isiOS) appUrl = `maps://?q=${lat},${lng}`; // Apple/Google Maps on iOS
-        else if (isAndroid) appUrl = `geo:${lat},${lng}?q=${lat},${lng}`; // Android geo scheme
+        if (isiOS) appUrl = `maps://?q=${lat},${lng}`;
+        else if (isAndroid) appUrl = `geo:${lat},${lng}?q=${lat},${lng}`;
         else appUrl = `https://www.google.com/maps?q=${lat},${lng}`;
         webUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       } else {
@@ -1250,10 +1170,8 @@
       }
     }
 
-    // Use same-tab navigation to avoid creating a visible new tab
     try {
       window.location.href = appUrl;
-      // Fallback to web URL if app is not installed or blocked
       setTimeout(() => { try { window.location.href = webUrl; } catch(_) {} }, 600);
     } catch(_) {
       try { window.location.href = webUrl; } catch(_) {}
@@ -1798,20 +1716,20 @@
       if (villageMapsBtn) {
         villageMapsBtn.addEventListener('click', openVillageMaps);
       }
-
-      // Disable right-click on PDF viewer
+      
+      // Disable right-click on image viewer
       document.addEventListener('contextmenu', function(e) {
-        const pdfViewer = document.getElementById('pdf-viewer-container');
-        if (pdfViewer && pdfViewer.style.display !== 'none' && pdfViewer.contains(e.target)) {
+        const viewer = document.getElementById('openseadragon-viewer');
+        if (viewer && viewer.style.display !== 'none' && viewer.contains(e.target)) {
           e.preventDefault();
           return false;
         }
       });
 
-      // Disable keyboard shortcuts for PDF viewer
+      // Disable keyboard shortcuts for image viewer
       document.addEventListener('keydown', function(e) {
-        const pdfViewer = document.getElementById('pdf-viewer-container');
-        if (pdfViewer && pdfViewer.style.display !== 'none') {
+        const container = document.getElementById('image-viewer-container');
+        if (container && container.classList.contains('active')) {
           // Block Ctrl+S, Ctrl+P, Print Screen, etc.
           if ((e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'a')) || e.key === 'PrintScreen') {
             e.preventDefault();
@@ -1831,180 +1749,73 @@
     function closeVillageMaps() {
       document.getElementById('village-maps-modal').classList.remove('active');
       document.body.style.overflow = '';
-      // Clear PDF viewer
-      const pdfViewer = document.getElementById('pdf-viewer-container');
-      const viewer = document.getElementById('pdf-viewer');
-      const contentWrap = document.querySelector('.village-maps-content');
-      if (contentWrap) contentWrap.classList.remove('pdf-open');
-      if (pdfViewer) pdfViewer.style.display = 'none';
-      if (viewer) viewer.innerHTML = '';
+      closeImageViewer();
+    }
+
+    function closeImageViewer() {
+      const container = document.getElementById('image-viewer-container');
+      if (container) {
+        container.classList.remove('active');
+      }
+      if (viewer) {
+        viewer.destroy();
+        viewer = null;
+      }
+      const viewerDiv = document.getElementById('openseadragon-viewer');
+      if (viewerDiv) {
+        viewerDiv.innerHTML = '';
+      }
       setMapInteractionEnabled(true);
-      pdfDoc = null;
-      pageNum = 1;
-      pageNumPending = null;
-      pageRendering = false;
-      activePointers.clear();
-      stopInertia();
-      resetPdfTransform();
     }
 
     function loadVillageMap(villageName) {
-      const pdfUrl = `${VILLAGE_PDF_BASE_URL}/${villageName}.pdf`;
-      const pdfViewer = document.getElementById('pdf-viewer-container');
-      const viewer = document.getElementById('pdf-viewer');
-      const contentWrap = document.querySelector('.village-maps-content');
-      const ua = navigator.userAgent || '';
-      const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
-      const isIOSSafari = isIOS && isSafari;
-
-      // iOS Safari handles PDFs better in a new tab; keep list visible (no blank PDF area).
-      if (isIOSSafari) {
-        if (contentWrap) contentWrap.classList.remove('pdf-open');
-        if (pdfViewer) pdfViewer.style.display = 'none';
-        setMapInteractionEnabled(true);
-        try {
-          window.open(pdfUrl, '_blank');
-        } catch (_) {
-          window.location.href = pdfUrl;
-        }
-        return;
+      // Lazy load: only load when clicked
+      const imageUrl = `${IMAGE_BASE_URL}/${villageName}.jpg`;
+      
+      // Show viewer container
+      const container = document.getElementById('image-viewer-container');
+      if (container) {
+        container.classList.add('active');
       }
       
-      // Show PDF viewer
-      pdfViewer.style.display = 'flex';
-      if (contentWrap) contentWrap.classList.add('pdf-open');
+      // Disable map interaction
       setMapInteractionEnabled(false);
-      viewer.innerHTML = '<div id="pdf-stage"><canvas id="pdf-canvas"></canvas></div>';
       
-      // Initialize canvas
-      canvas = document.getElementById('pdf-canvas');
-      ctx = canvas.getContext('2d');
-      scale = 1;
-      resetPdfTransform();
-      setupPdfTouchInteractions();
-      
-      // Load PDF
-      pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
-        pdfDoc = pdfDoc_;
-        document.getElementById('page-num').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
-        
-        // Render first page
-        renderPage(pageNum);
-      }).catch(function(error) {
-        console.error('Error loading PDF:', error);
-        viewer.innerHTML = '<div style="color:white;text-align:center;padding:50px;">Error loading PDF. Please try again later.</div>';
-      });
-    }
-
-    function renderPage(num) {
-      pageRendering = true;
-      
-      pdfDoc.getPage(num).then(function(page) {
-        const viewer = document.getElementById('pdf-viewer');
-        const availableWidth = Math.max((viewer ? viewer.clientWidth : 900) - 20, 320);
-        const fitScale = availableWidth / page.getViewport({ scale: 1 }).width;
-        const viewport = page.getViewport({ scale: fitScale * scale });
-        const outputScale = Math.min(window.devicePixelRatio || 1, MAX_OUTPUT_DPR);
-        canvas.width = Math.floor(viewport.width * outputScale);
-        canvas.height = Math.floor(viewport.height * outputScale);
-        canvas.style.width = `${Math.floor(viewport.width)}px`;
-        canvas.style.height = `${Math.floor(viewport.height)}px`;
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const renderContext = {
-          canvasContext: ctx,
-          viewport: viewport,
-          transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
-        };
-        
-        const renderTask = page.render(renderContext);
-
-        renderTask.promise.then(function() {
-          pageRendering = false;
-          if (pageNumPending !== null) {
-            renderPage(pageNumPending);
-            pageNumPending = null;
-          }
-        });
-      });
-
-      // Update page counters
-      document.getElementById('page-num').textContent = `Page ${num} of ${pdfDoc.numPages}`;
-      
-      // Update button states
-      document.getElementById('prev-btn').disabled = num <= 1;
-      document.getElementById('next-btn').disabled = num >= pdfDoc.numPages;
-    }
-
-    function queueRenderPage(num) {
-      if (pageRendering) {
-        pageNumPending = num;
-      } else {
-        renderPage(num);
+      // Destroy previous viewer if exists
+      if (viewer) {
+        viewer.destroy();
+        viewer = null;
       }
-    }
-
-    function previousPage() {
-      if (pageNum <= 1) return;
-      pageNum--;
-      queueRenderPage(pageNum);
-    }
-
-    function nextPage() {
-      if (pageNum >= pdfDoc.numPages) return;
-      pageNum++;
-      queueRenderPage(pageNum);
-    }
-
-    function zoomIn() {
-      scale = Math.min(scale + 0.2, 4.0);
-      resetPdfTransform();
-      queueRenderPage(pageNum);
-    }
-
-    function zoomOut() {
-      scale = Math.max(scale - 0.2, 1.0);
-      resetPdfTransform();
-      queueRenderPage(pageNum);
-    }
-
-    function resetPdfTransform() {
-      pdfTransformScale = 1;
-      pdfPanX = 0;
-      pdfPanY = 0;
-      applyPdfTransform();
-    }
-
-    function applyPdfTransform() {
-      const stage = document.getElementById('pdf-stage');
-      if (!stage) return;
-      stage.style.transform = `translate(${pdfPanX}px, ${pdfPanY}px) scale(${pdfTransformScale})`;
-    }
-
-    function stopInertia() {
-      if (inertiaFrame) {
-        cancelAnimationFrame(inertiaFrame);
-        inertiaFrame = null;
-      }
-    }
-
-    function startInertia() {
-      stopInertia();
-      function step() {
-        panVelocityX *= 0.92;
-        panVelocityY *= 0.92;
-        if (Math.abs(panVelocityX) < 0.05 && Math.abs(panVelocityY) < 0.05) {
-          stopInertia();
-          return;
+      
+      // Initialize OpenSeadragon viewer
+      viewer = OpenSeadragon({
+        id: 'openseadragon-viewer',
+        prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
+        tileSources: {
+          type: 'image',
+          url: imageUrl
+        },
+        showNavigator: true,
+        maxZoomPixelRatio: 2,
+        zoomPerScroll: 1.2,
+        constrainDuringPan: true,
+        minZoomLevel: 1,
+        visibilityRatio: 1,
+        springStiffness: 6.5,
+        animationTime: 0.5
+      });
+      
+      viewer.addOnceHandler('tile-drawn', function() {
+        console.log('✅ Image loaded:', villageName);
+      });
+      
+      viewer.addHandler('canvas-error', function(error) {
+        console.error('❌ Error loading image:', villageName, error);
+        const viewerDiv = document.getElementById('openseadragon-viewer');
+        if (viewerDiv) {
+          viewerDiv.innerHTML = '<div style="color:white;text-align:center;padding:50px;display:flex;align-items:center;justify-content:center;height:100%;">Error loading map image. Please try again.</div>';
         }
-        pdfPanX += panVelocityX;
-        pdfPanY += panVelocityY;
-        applyPdfTransform();
-        inertiaFrame = requestAnimationFrame(step);
-      }
-      inertiaFrame = requestAnimationFrame(step);
+      });
     }
 
     function setMapInteractionEnabled(enabled) {
@@ -2017,104 +1828,6 @@
       try { map.boxZoom[fn](); } catch(_) {}
       try { map.keyboard[fn](); } catch(_) {}
       try { if (enabled) map.tap.enable(); else map.tap.disable(); } catch(_) {}
-    }
-
-    function getDistance(p1, p2) {
-      const dx = p1.x - p2.x;
-      const dy = p1.y - p2.y;
-      return Math.sqrt((dx * dx) + (dy * dy));
-    }
-
-    function setupPdfTouchInteractions() {
-      const stage = document.getElementById('pdf-stage');
-      if (!stage) return;
-      let moved = false;
-
-      stage.onpointerdown = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        stopInertia();
-        moved = false;
-        stage.setPointerCapture(e.pointerId);
-        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (activePointers.size === 1) {
-          panStartX = e.clientX - pdfPanX;
-          panStartY = e.clientY - pdfPanY;
-          lastMoveX = e.clientX;
-          lastMoveY = e.clientY;
-          lastMoveTs = performance.now();
-          panVelocityX = 0;
-          panVelocityY = 0;
-          stage.classList.add('dragging');
-        } else if (activePointers.size === 2) {
-          const pts = Array.from(activePointers.values());
-          pinchStartDistance = getDistance(pts[0], pts[1]);
-          pinchStartScale = pdfTransformScale;
-        }
-      };
-
-      stage.onpointermove = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!activePointers.has(e.pointerId)) return;
-        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (activePointers.size === 2) {
-          const pts = Array.from(activePointers.values());
-          const dist = getDistance(pts[0], pts[1]);
-          if (pinchStartDistance > 0) {
-            const nextScale = pinchStartScale * (dist / pinchStartDistance);
-            pdfTransformScale = Math.max(MIN_TOUCH_SCALE, Math.min(MAX_TOUCH_SCALE, nextScale));
-            applyPdfTransform();
-          }
-          return;
-        }
-        if (activePointers.size === 1 && pdfTransformScale >= 1) {
-          const nowTs = performance.now();
-          if (Math.abs(e.clientX - lastMoveX) > 3 || Math.abs(e.clientY - lastMoveY) > 3) moved = true;
-          pdfPanX = e.clientX - panStartX;
-          pdfPanY = e.clientY - panStartY;
-          const dt = Math.max(nowTs - lastMoveTs, 16);
-          panVelocityX = (e.clientX - lastMoveX) / (dt / 16);
-          panVelocityY = (e.clientY - lastMoveY) / (dt / 16);
-          lastMoveX = e.clientX;
-          lastMoveY = e.clientY;
-          lastMoveTs = nowTs;
-          applyPdfTransform();
-        }
-      };
-
-      function stopPointer(e) {
-        activePointers.delete(e.pointerId);
-        if (activePointers.size < 2) pinchStartDistance = 0;
-        if (activePointers.size === 0) {
-          stage.classList.remove('dragging');
-          const now = Date.now();
-          if (e.pointerType === 'touch' && !moved && (now - lastTapAt) < 280) {
-            pdfTransformScale = pdfTransformScale > 1.2 ? 1 : 2;
-            pdfPanX = 0;
-            pdfPanY = 0;
-            applyPdfTransform();
-            lastTapAt = 0;
-          } else {
-            if (!moved) lastTapAt = now;
-            if (Math.abs(panVelocityX) > 0.2 || Math.abs(panVelocityY) > 0.2) {
-              startInertia();
-            }
-          }
-        }
-      }
-
-      stage.onpointerup = stopPointer;
-      stage.onpointercancel = stopPointer;
-      stage.onpointerleave = stopPointer;
-      stage.onwheel = function(e) {
-        if (!e.ctrlKey) return;
-        e.preventDefault();
-        e.stopPropagation();
-        const delta = e.deltaY < 0 ? 0.12 : -0.12;
-        pdfTransformScale = Math.max(MIN_TOUCH_SCALE, Math.min(MAX_TOUCH_SCALE, pdfTransformScale + delta));
-        applyPdfTransform();
-      };
     }
 
   </script>
