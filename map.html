@@ -789,6 +789,50 @@
       overflow: hidden;
     }
     
+    /* Loading Spinner */
+    .loading-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .loading-spinner.hidden {
+      display: none;
+    }
+    
+    .spinner-ring {
+      width: 60px;
+      height: 60px;
+      border: 6px solid rgba(255, 255, 255, 0.2);
+      border-top: 6px solid #0a7a3b;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    
+    .loading-text .brand {
+      color: #0a7a3b;
+      font-weight: 700;
+    }
+    
     /* Watermark */
     .image-watermark {
       position: absolute;
@@ -809,7 +853,7 @@
       position: absolute;
       top: 20px;
       left: 20px;
-      z-index: 500;
+      z-index: 501;
       background: linear-gradient(180deg, #0a7a3b, #066533);
       color: white;
       border: none;
@@ -1045,6 +1089,10 @@
       </div>
       <div class="image-viewer-container" id="image-viewer-container">
         <button class="back-button" onclick="closeImageViewer()">← Back</button>
+        <div class="loading-spinner" id="loading-spinner">
+          <div class="spinner-ring"></div>
+          <div class="loading-text"><span class="brand">Terravest</span> Loading Map...</div>
+        </div>
         <div class="image-watermark">VASTU PERFECT PROPERTIES</div>
         <div id="openseadragon-viewer"></div>
       </div>
@@ -1757,6 +1805,10 @@
       if (container) {
         container.classList.remove('active');
       }
+      const loadingSpinner = document.getElementById('loading-spinner');
+      if (loadingSpinner) {
+        loadingSpinner.classList.add('hidden');
+      }
       if (viewer) {
         viewer.destroy();
         viewer = null;
@@ -1776,6 +1828,12 @@
       const container = document.getElementById('image-viewer-container');
       if (container) {
         container.classList.add('active');
+      }
+      
+      // Show loading spinner
+      const loadingSpinner = document.getElementById('loading-spinner');
+      if (loadingSpinner) {
+        loadingSpinner.classList.remove('hidden');
       }
       
       // Disable map interaction
@@ -1807,11 +1865,20 @@
       
       viewer.addOnceHandler('tile-drawn', function() {
         console.log('✅ Image loaded:', villageName);
+        // Hide loading spinner when image finishes loading
+        const loadingSpinner = document.getElementById('loading-spinner');
+        if (loadingSpinner) {
+          loadingSpinner.classList.add('hidden');
+        }
       });
       
       viewer.addHandler('canvas-error', function(error) {
         console.error('❌ Error loading image:', villageName, error);
         const viewerDiv = document.getElementById('openseadragon-viewer');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        if (loadingSpinner) {
+          loadingSpinner.classList.add('hidden');
+        }
         if (viewerDiv) {
           viewerDiv.innerHTML = '<div style="color:white;text-align:center;padding:50px;display:flex;align-items:center;justify-content:center;height:100%;">Error loading map image. Please try again.</div>';
         }
