@@ -9,13 +9,13 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   
-  <title> PROJECT </title>
+  <title> 45GRIDS </title>
   <!-- PWA manifest -->
   <link rel="manifest" href="./manifest.json">
   
   <!-- PWA / App metadata -->
-  <meta name="application-name" content="Terravest">
-  <meta name="apple-mobile-web-app-title" content="Terravest">
+  <meta name="application-name" content="45GRIDS">
+  <meta name="apple-mobile-web-app-title" content="45GRIDS">
   <meta name="description" content="Secure Property Dashboard for managing and visualizing land and plot data with setellite map">
 
   <!-- iOS PWA support -->
@@ -74,11 +74,11 @@
       border: 0;
     }
     #login {
-      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 32px;
+      padding: 2rem;
       box-sizing: border-box;
       background: transparent;
       color: #e6eef8;
@@ -146,7 +146,7 @@
     @media (max-width: 768px) {
       .video-wrapper, .login-bg-video {
         width: 100vw;
-        height: 100vh;
+        height: 100dvh;
         object-fit: cover;
         object-position: center;
       }
@@ -208,14 +208,21 @@
 
     .auth-card {
       display: flex;
-      gap: 36px;
+      flex-wrap: wrap;
+      gap: 2rem;
       align-items: center;
       background: rgba(255,255,255,0.03);
-      border-radius: 14px;
-      padding: 28px;
+      border-radius: 0.875rem;
+      padding: 1.5rem;
       box-shadow: 0 12px 40px rgba(2,6,23,0.6);
       -webkit-backdrop-filter: blur(6px);
       backdrop-filter: blur(6px);
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+    .auth-card {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
     }
 
     .auth-brand {
@@ -250,7 +257,8 @@
     }
 
     .auth-form {
-      width: 340px;
+      width: 100%;
+      max-width: 280px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -329,14 +337,43 @@
     }
 
     @media (max-width: 720px) {
-      .auth-card { flex-direction: column; padding: 20px; gap: 16px; }
-      .auth-form { width: 100%; }
+      .auth-card { 
+        flex-direction: column; 
+        flex-wrap: nowrap;
+        padding: 1.25rem; 
+        gap: 1.5rem; 
+        max-width: 320px;
+      }
+      .auth-form { 
+        width: 100%; 
+        max-width: 260px;
+      }
       .auth-brand img { width: 64px; }
+    }
+
+    /* Extra small screens (320px and below) */
+    @media (max-width: 360px) {
+      .auth-card { 
+        padding: 1rem; 
+        gap: 1rem; 
+        max-width: 300px;
+      }
+      .auth-form { 
+        max-width: 240px;
+      }
+      #passcode {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+      }
+      #login-btn {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+      }
     }
     /* Right-side brand media */
     .auth-media {
-      width: 420px;
-      max-width: 42vw;
+      width: 100%;
+      max-width: 420px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -378,7 +415,7 @@
       .auth-media { width: 100%; max-width: none; }
     }
   #map {
-    height: 100vh;
+    height: 100dvh;
     width: 100vw;
     display: none;
     margin-top: 0;
@@ -395,7 +432,7 @@
     color: white;
     border: none;
     border-radius: 50px;
-    padding: 12px 24px;
+    padding: 12px 20px;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
@@ -404,6 +441,10 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 120px;
+    max-width: 150px;
+    white-space: nowrap;
+    box-sizing: border-box;
   }
   
   #list-view-btn:hover {
@@ -668,13 +709,13 @@
     #village-maps-btn {
       position: absolute;
       top: 115px;
-      right: 160px;
+      right: 170px;
       z-index: 1000;
       background: linear-gradient(180deg, #0a7a3b, #066533);
       color: white;
       border: none;
       border-radius: 50px;
-      padding: 12px 24px;
+      padding: 12px 20px;
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
@@ -683,6 +724,10 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      min-width: 120px;
+      max-width: 150px;
+      white-space: nowrap;
+      box-sizing: border-box;
     }
     
     #village-maps-btn:hover {
@@ -699,10 +744,28 @@
     /* Keep top action buttons identical size */
     #list-view-btn,
     #village-maps-btn {
-      width: 150px;
+      width: 140px;
       justify-content: center;
       box-sizing: border-box;
       white-space: nowrap;
+    }
+
+    /* Mobile button adjustments */
+    @media (max-width: 480px) {
+      #list-view-btn {
+        top: 80px;
+        right: 5px;
+        padding: 10px 16px;
+        font-size: 13px;
+        width: 120px;
+      }
+      #village-maps-btn {
+        top: 80px;
+        right: 130px;
+        padding: 10px 16px;
+        font-size: 13px;
+        width: 120px;
+      }
     }
 
     /* Clean full-screen village/map layout */
@@ -726,7 +789,7 @@
       position: fixed;
       inset: 0;
       width: 100vw;
-      height: 100vh;
+      height: 100dvh;
       background: #fff;
       z-index: 9000;
       display: none;
@@ -810,7 +873,7 @@
       top: 0;
       left: 0;
       width: 100vw;
-      height: 100vh;
+      height: 100dvh;
       background: #000;
       z-index: 9999;
       display: none;
@@ -919,6 +982,23 @@
       filter: brightness(0.95);
     }
 
+    /* Mobile back button positioning */
+    @media (max-width: 768px) {
+      .back-button {
+        top: 120px;
+        left: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .back-button {
+        top: 140px;
+        left: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+    }
+
     /* Mobile Responsive */
     @media (max-width: 768px) {
       #village-header {
@@ -1014,7 +1094,7 @@
           <video id="brand-video" class="brand-video" muted playsinline webkit-playsinline preload="auto" poster="assets/terravest_logo.png?v=11" disablePictureInPicture>
             <source src="assets/terravest_logo_video.mp4" type="video/mp4">
           </video>
-          <h2 class="brand-title">Terravest Group</h2>
+          <h2 class="brand-title">45GRIDS</h2>
           <p class="brand-sub">Secure property dashboard — sign in to continue</p>
         </div>
         <form class="auth-form" id="auth-form" aria-label="Login form" onsubmit="checkPasscode(event)">
@@ -1111,7 +1191,7 @@
       <button id="viewer-back-btn" class="back-button" onclick="closeImageViewer()">← Back</button>
       <div id="viewer-loading" class="fullscreen-loading">
         <div class="spinner"></div>
-        <div>Terravest Loading Map...</div>
+        <div>45GRIDS Loading Map...</div>
       </div>
       <div id="openseadragon-viewer"></div>
     </div>
@@ -1353,7 +1433,7 @@
       if (event && typeof event.preventDefault === 'function') event.preventDefault();
       const input = document.getElementById('passcode').value;
       playVideoOnce();
-      if (input === '22121998') {
+      if (input === '9999') {
         const loginEl = document.getElementById('login');
         const mapEl = document.getElementById('map');
         mapEl.style.display = 'block';
@@ -2017,7 +2097,7 @@
       setTimeout(hideSplash, 3000);
     })();
   </script>
-  <div id="bottom-banner"> WELCOME TO TERRAVEST GROUP </div>
+  <div id="bottom-banner"> WELCOME TO 45GRIDS </div>
 
 </body>
 </html>
