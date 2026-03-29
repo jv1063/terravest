@@ -1254,6 +1254,24 @@
         v.muted = true;
         v.setAttribute('playsinline','');
         v.setAttribute('webkit-playsinline','');
+        // Add Safari-specific video loading and playback
+        v.addEventListener('loadeddata', () => {
+          v.style.opacity = '1';
+          v.style.display = 'block';
+        });
+        v.addEventListener('error', () => {
+          // If video fails, ensure poster is visible
+          v.style.display = 'none';
+          const poster = new Image();
+          poster.src = v.getAttribute('poster');
+          poster.style.cssText = 'width: 100%; height: auto; display: block; border-radius: 12px;';
+          v.parentNode.insertBefore(poster, v);
+        });
+        // Attempt autoplay on Safari
+        v.play().catch(() => {
+          // If autoplay fails, video will play on user interaction
+          console.log('Brand video autoplay blocked - will play on interaction');
+        });
       }
     } catch(_) {}
 
@@ -1288,6 +1306,29 @@
         }
       }
     } catch(e) { console.warn('Bypass param check failed', e); }
+
+    // Safari video interaction trigger
+    if (isIOS) {
+      let videoStarted = false;
+      const startVideoOnInteraction = () => {
+        if (!videoStarted) {
+          const brandVideo = document.getElementById('brand-video');
+          if (brandVideo && brandVideo.paused) {
+            brandVideo.play().then(() => {
+              videoStarted = true;
+              console.log('Brand video started on user interaction');
+            }).catch(() => {
+              console.log('Brand video failed to start even on interaction');
+            });
+          }
+        }
+      };
+      
+      // Start video on any user interaction
+      document.addEventListener('touchstart', startVideoOnInteraction, { once: true });
+      document.addEventListener('click', startVideoOnInteraction, { once: true });
+    }
+
     setTimeout(playVideoOnce, 500);
   });
 
@@ -1723,11 +1764,38 @@
       const q = (filterText || (document.getElementById('property-search')?.value || '')).toString().toLowerCase();
       let shown = 0;
 
-      geoJsonData.features.forEach((feature, index) => {
+      // Sort features by time (newest first)
+      const sortedFeatures = [...geoJsonData.features].sort((a, b) => {
+        const propsA = a.properties || {};
+        const propsB = b.properties || {};
+        
+        // Try to find time-related fields
+        const timeFields = ['created_at', 'createdAt', 'date', 'timestamp', 'added_date', 'addedDate', 'time', 'updated_at', 'updatedAt'];
+        let timeA = null;
+        let timeB = null;
+        
+        // Look for time fields in both properties
+        for (const field of timeFields) {
+          if (propsA[field] && !timeA) timeA = new Date(propsA[field]);
+          if (propsB[field] && !timeB) timeB = new Date(propsB[field]);
+        }
+        
+        // If valid dates found, sort by time (newest first)
+        if (timeA && timeB && !isNaN(timeA) && !isNaN(timeB)) {
+          return timeB - timeA; // Newest first
+        }
+        
+        // Fallback: sort by FID (assuming higher FID = newer)
+        const fidA = parseInt(getPropertyValue(propsA, ['fid', 'FID', 'id', 'ID'])) || 0;
+        const fidB = parseInt(getPropertyValue(propsB, ['fid', 'FID', 'id', 'ID'])) || 0;
+        return fidB - fidA; // Higher FID first (newer)
+      });
+
+      sortedFeatures.forEach((feature, originalIndex) => {
         const props = feature.properties || {};
         
         // Get property values
-        const fid = getPropertyValue(props, ['fid', 'FID', 'id', 'ID']) || index + 1;
+        const fid = getPropertyValue(props, ['fid', 'FID', 'id', 'ID']) || originalIndex + 1;
         const title = getPropertyValue(props, ['title', 'Title', 'name', 'Name', 'Discription', 'description', 'Tittle']) || 'No title';
         const size = getPropertyValue(props, ['Plot size', 'plot_size', 'plot size', 'area', 'Area', 'size', 'Size']) || 'N/A';
         const price = getPropertyValue(props, ['price', 'Price', 'cost']) || 'Price not set';
@@ -1737,12 +1805,12 @@
         const hay = `${fid} ${title} ${size} ${price} ${tenure}`.toLowerCase();
         if (q && !hay.includes(q)) return;
 
-        // Get coordinates
-        const coordinates = getPropertyCoordinates(feature);
+        // Get the original index for zoomToProperty function
+        const actualIndex = geoJsonData.features.indexOf(feature);
         
         // Create property card HTML
         const propertyHtml = `
-          <div class="property-item" data-index="${index}">
+          <div class="property-item" data-index="${actualIndex}">
             <div class="property-title">${escapeHtml(title)}</div>
             <div class="property-meta">
               <span><strong>ID:</strong> ${fid}</span>
@@ -1750,7 +1818,7 @@
               <span><strong>Price:</strong> ${escapeHtml(price)}</span>
               <span><strong>Tenure:</strong> ${escapeHtml(tenure)}</span>
             </div>
-            <button class="view-on-map-btn" data-index="${index}">View on Map</button>
+            <button class="view-on-map-btn" data-index="${actualIndex}">View on Map</button>
           </div>
         `;
         
@@ -1761,7 +1829,7 @@
         listContent.innerHTML = '<div style="padding:24px;color:#6b7280;">No properties found.</div>';
       }
       try { updateListSpacer(); } catch(e) {}
-      console.log(`✅ Populated list with ${geoJsonData.features.length} properties`);
+      console.log(`✅ Populated list with ${shown} properties (sorted by time: newest first)`);
     }
 
     // Keep a spacer at the bottom equal to one card's height
