@@ -1,7 +1,7 @@
 {
-  "id": "/terravest/map.html",
-  "name": "Terravest",
-  "short_name": "Terravest",
+  "id": "/45GRIDS/map.html",
+  "name": "45GRIDS",
+  "short_name": "45GRIDS",
   "description": "Secure Property Dashboard for managing and visualizing land and plot data with satellite map",
   "start_url": "./map.html",
   "scope": "./",
