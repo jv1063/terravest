@@ -29,7 +29,14 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   // 1️⃣ Never intercept/caches for map tiles or GeoJSON; let network handle directly
-  if (url.href.includes("ArcGIS") || url.hostname.includes("arcgisonline") || url.pathname.includes("tile") || url.pathname.endsWith(".geojson")) {
+  if (
+    url.href.includes("ArcGIS") ||
+    url.hostname.includes("arcgisonline") ||
+    url.hostname.includes("r2.dev") ||
+    url.pathname.includes("tile") ||
+    url.pathname.endsWith(".geojson") ||
+    /\/\d+\/\d+\/\d+\.png$/.test(url.pathname)
+  ) {
     return; // bypass SW, avoids stale/hung promises
   }
 
