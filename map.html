@@ -1757,8 +1757,42 @@
             try { map.invalidateSize(); } catch(e) {}
             try { map.fire('moveend'); } catch(e) {}
           }
-        }, 8000);
+        }, 10000);
         map.once('load', () => clearTimeout(watchdog));
+      });
+
+      // Click to open location in Google Maps
+      let googleMapsMarker = null;
+      map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+
+        // Remove existing marker
+        if (googleMapsMarker) {
+          map.removeLayer(googleMapsMarker);
+        }
+
+        // Add marker at clicked location
+        googleMapsMarker = L.marker(e.latlng).addTo(map);
+
+        // Create popup with Google Maps link
+        const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        const popupContent = `
+          <div style="text-align: center; padding: 5px;">
+            <div style="font-weight: 600; margin-bottom: 8px;">Location</div>
+            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+              ${lat.toFixed(6)}, ${lng.toFixed(6)}
+            </div>
+            <a href="${googleMapsUrl}" target="_blank" 
+               style="display: inline-block; background: #4285f4; color: white; 
+                      padding: 8px 16px; border-radius: 4px; text-decoration: none; 
+                      font-size: 13px; font-weight: 500;">
+              Open in Google Maps
+            </a>
+          </div>
+        `;
+
+        googleMapsMarker.bindPopup(popupContent).openPopup();
       });
 
       // Create a top pane for labels so they render above the satellite imagery
