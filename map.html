@@ -32,10 +32,10 @@
   <!-- Absolute paths removed to avoid broken icons on custom domains -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- PMTiles -->
+  <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
   <!-- Remixicon for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css" crossorigin="">
-  <!-- OpenSeadragon -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
     body, html {
@@ -1217,10 +1217,10 @@
     <button id="list-view-btn">📋 List View</button>
     <button id="village-maps-btn">🗺️ Village Maps</button>
     <div id="map-tiles-control">
-      <div class="tiles-control-title">Village Map Tiles</div>
+      <div class="tiles-control-title">Auda Map Tiles</div>
       <div class="tiles-toggle-row">
         <span class="tiles-toggle-label">Show tiles</span>
-        <input type="checkbox" id="map-tiles-toggle" aria-label="Toggle village map tiles">
+        <input type="checkbox" id="map-tiles-toggle" aria-label="Toggle auda map tiles">
       </div>
       <div id="map-tiles-opacity-wrap" class="hidden">
         <label for="map-tiles-opacity">
@@ -1338,15 +1338,13 @@
   const MAP_TILES_BASE_URL = 'https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev';
 
   // XYZ tile folders inside the mptiles bucket ({baseUrl}/{folder}/{z}/{x}/{y}.png)
-  const MAP_TILE_SOURCES = [
-    { name: 'Kaneti', folder: 'kaneti', minZoom: 13, maxZoom: 19 }
-  ];
+  const MAP_TILE_SOURCES = [];
 
   const TRANSPARENT_TILE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   const MAP_TILES_STORAGE_KEY = '45grids_map_tiles_prefs';
 
   let customTileGroup = null;
-  let mapTilesEnabled = false;
+  let mapTilesEnabled = true;
   let mapTilesOpacity = 0.85;
   
   // WhatsApp number
@@ -1658,6 +1656,7 @@
 
     function initCustomMapTiles() {
       if (!map || customTileGroup) return;
+      if (MAP_TILE_SOURCES.length === 0) return; // Skip if no XYZ tile sources
 
       map.createPane('mptiles');
       map.getPane('mptiles').style.zIndex = 450;
@@ -1699,9 +1698,15 @@
     function setMapTilesOpacity(value) {
       mapTilesOpacity = Math.min(1, Math.max(0, value));
       if (customTileGroup) {
-        customTileGroup.eachLayer(function (layer) {
-          if (layer.setOpacity) layer.setOpacity(mapTilesOpacity);
-        });
+        if (customTileGroup.setOpacity) {
+          // PMTiles layer (single layer)
+          customTileGroup.setOpacity(mapTilesOpacity);
+        } else if (customTileGroup.eachLayer) {
+          // LayerGroup (multiple XYZ tiles)
+          customTileGroup.eachLayer(function (layer) {
+            if (layer.setOpacity) layer.setOpacity(mapTilesOpacity);
+          });
+        }
       }
       saveMapTilesPrefs();
       syncMapTilesControlUI();
@@ -1779,6 +1784,26 @@
         pane: 'labels',
         attribution: 'Labels &copy; Esri'
       }).addTo(map);
+
+      // PMTiles layer for auda.pmtiles from Cloudflare R2
+      const pmtilesSource = new pmtiles.PMTiles("https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles");
+
+      const pmtilesLayer = pmtiles.leafletRasterLayer(pmtilesSource, {
+        zIndex: 500,
+        opacity: mapTilesOpacity
+      });
+
+      pmtilesLayer.addTo(map);
+
+      // Store PMTiles layer for opacity control
+      customTileGroup = pmtilesLayer;
+
+      // Log PMTiles loading status
+      pmtilesSource.getHeader().then(header => {
+        console.log('✅ PMTiles header loaded:', header);
+      }).catch(err => {
+        console.error('❌ PMTiles header error:', err);
+      });
 
       loadMapTilesPrefs();
       initCustomMapTiles();
