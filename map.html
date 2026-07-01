@@ -705,52 +705,15 @@
       display: none; /* hidden on login screen; shown on map */
     }
 
-    /* Village Maps Button */
-    #village-maps-btn {
-      position: absolute;
-      top: 115px;
-      right: 170px;
-      z-index: 1000;
-      background: linear-gradient(180deg, #0a7a3b, #066533);
-      color: white;
-      border: none;
-      border-radius: 50px;
-      padding: 12px 20px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(6, 122, 59, 0.4);
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 120px;
-      max-width: 150px;
-      white-space: nowrap;
-      box-sizing: border-box;
-    }
-    
-    #village-maps-btn:hover {
-      filter: brightness(1.05);
-      transform: translateY(-1px);
-      box-shadow: 0 10px 25px rgba(6, 122, 59, 0.5);
-    }
-    
-    #village-maps-btn:active {
-      transform: translateY(0);
-      filter: brightness(0.95);
-    }
-
     /* Keep top action buttons identical size */
-    #list-view-btn,
-    #village-maps-btn {
+    #list-view-btn {
       width: 140px;
       justify-content: center;
       box-sizing: border-box;
       white-space: nowrap;
     }
 
-    /* Custom map tiles overlay controls */
+    /* Custom map tiles overlay controls - Revenue mode widget */
     #map-tiles-control {
       position: absolute;
       top: 115px;
@@ -758,19 +721,62 @@
       z-index: 1000;
       background: rgba(255, 255, 255, 0.92);
       border-radius: 12px;
-      padding: 12px 14px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
       min-width: 180px;
       font-size: 13px;
       color: #1f2937;
       backdrop-filter: blur(6px);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    #map-tiles-control.collapsed {
+      min-width: auto;
+      width: auto;
+    }
+
+    #map-tiles-control .tiles-control-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      cursor: pointer;
+      user-select: none;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    #map-tiles-control .tiles-control-header:hover {
+      background: rgba(255, 255, 255, 0.98);
     }
 
     #map-tiles-control .tiles-control-title {
       font-weight: 700;
       font-size: 13px;
-      margin-bottom: 10px;
       color: #066533;
+    }
+
+    #map-tiles-control .tiles-control-toggle-icon {
+      font-size: 16px;
+      color: #066533;
+      transition: transform 0.3s ease;
+    }
+
+    #map-tiles-control.collapsed .tiles-control-toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    #map-tiles-control .tiles-control-content {
+      padding: 0 14px 12px 14px;
+      max-height: 200px;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+      opacity: 1;
+    }
+
+    #map-tiles-control.collapsed .tiles-control-content {
+      max-height: 0;
+      padding: 0 14px;
+      opacity: 0;
     }
 
     #map-tiles-control .tiles-toggle-row {
@@ -778,6 +784,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      margin-top: 10px;
     }
 
     #map-tiles-control .tiles-toggle-label {
@@ -853,13 +860,6 @@
         font-size: 13px;
         width: 120px;
       }
-      #village-maps-btn {
-        top: 80px;
-        right: 130px;
-        padding: 10px 16px;
-        font-size: 13px;
-        width: 120px;
-      }
       #map-tiles-control {
         top: 80px;
         left: 5px;
@@ -883,259 +883,6 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-    }
-
-    #village-page {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100dvh;
-      background: #fff;
-      z-index: 9000;
-      display: none;
-      overflow: hidden;
-    }
-
-    #village-page.active {
-      display: block;
-    }
-
-    #village-list {
-      position: absolute;
-      inset: 0;
-      overflow-y: auto;
-      padding: 80px 14px 20px;
-      background: #f8f9fa;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    #village-list .village-item {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    #village-list .village-item:hover,
-    #village-list .village-item:focus {
-      background: linear-gradient(180deg, #0a7a3b, #066533);
-      color: #fff;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(6, 122, 59, 0.25);
-    }
-
-    #village-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 64px;
-      background: linear-gradient(180deg, #0a7a3b, #066533);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 14px;
-      z-index: 9100;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.22);
-    }
-
-    #village-header h2 {
-      font-size: 20px;
-      margin: 0;
-      font-weight: 700;
-    }
-
-    #village-close-btn,
-    #viewer-back-btn {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: #fff;
-      border-radius: 18px;
-      min-width: 80px;
-      height: 36px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 14px;
-      padding: 0 12px;
-    }
-
-    #village-viewer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100dvh;
-      background: #000;
-      z-index: 9999;
-      display: none;
-      opacity: 0;
-      transition: opacity 0.35s ease;
-      overflow: hidden;
-    }
-
-    #village-viewer.active {
-      display: block;
-      opacity: 1;
-    }
-
-    #village-viewer.closing {
-      opacity: 0;
-    }
-
-    #openseadragon-viewer {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      transition: opacity 0.35s ease;
-      cursor: grab;
-      touch-action: none;
-    }
-
-    #openseadragon-viewer.opened {
-      opacity: 1;
-    }
-
-    #openseadragon-viewer .openseadragon-canvas {
-      cursor: grab;
-    }
-
-    #openseadragon-viewer.dragging .openseadragon-canvas,
-    #openseadragon-viewer .openseadragon-canvas:active {
-      cursor: grabbing;
-    }
-
-    #viewer-loading {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10001;
-      display: none;
-      color: #fff;
-      align-items: center;
-      gap: 12px;
-      font-weight: 700;
-    }
-
-    #viewer-loading.active {
-      display: flex;
-    }
-
-    #viewer-loading .spinner {
-      width: 44px;
-      height: 44px;
-      border: 5px solid rgba(255,255,255,0.30);
-      border-top: 5px solid #0a7a3b;
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    
-
-    
-    
-    /* Back Button */
-    .back-button {
-      position: absolute;
-      top: 80px;
-      left: 20px;
-      z-index: 501;
-      background: linear-gradient(180deg, #0a7a3b, #066533);
-      color: white;
-      border: none;
-      border-radius: 50px;
-      padding: 12px 18px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(6, 122, 59, 0.3);
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    .back-button:hover {
-      filter: brightness(1.05);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(6, 122, 59, 0.4);
-    }
-    
-    .back-button:active {
-      transform: translateY(0);
-      filter: brightness(0.95);
-    }
-
-    /* Mobile back button positioning */
-    @media (max-width: 768px) {
-      .back-button {
-        top: 120px;
-        left: 10px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .back-button {
-        top: 140px;
-        left: 8px;
-        padding: 10px 14px;
-        font-size: 13px;
-      }
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-      #village-header {
-        height: 64px;
-        padding: 0 10px;
-      }
-
-      #village-list {
-        padding: 76px 10px 12px;
-      }
-
-      #village-list .village-item {
-        padding: 12px 14px;
-        font-size: 14px;
-      }
-
-      #viewer-back-btn {
-        top: 8px;
-        left: 8px;
-        padding: 8px 12px;
-        font-size: 13px;
-      }
-
-      #viewer-loading {
-        font-size: 14px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      #village-header h2 {
-        font-size: 18px;
-      }
-
-      #village-list .village-item {
-        font-size: 13px;
-        padding: 10px 12px;
-      }
     }
   </style>
   <script>
@@ -1215,19 +962,23 @@
 
   <div id="map">
     <button id="list-view-btn">📋 List View</button>
-    <button id="village-maps-btn">🗺️ Village Maps</button>
-    <div id="map-tiles-control">
-      <div class="tiles-control-title">Auda Map Tiles</div>
-      <div class="tiles-toggle-row">
-        <span class="tiles-toggle-label">Show tiles</span>
-        <input type="checkbox" id="map-tiles-toggle" aria-label="Toggle auda map tiles">
+    <div id="map-tiles-control" class="collapsed">
+      <div class="tiles-control-header" onclick="toggleRevenueMode()">
+        <div class="tiles-control-title">Revenue mode</div>
+        <div class="tiles-control-toggle-icon">▼</div>
       </div>
-      <div id="map-tiles-opacity-wrap" class="hidden">
-        <label for="map-tiles-opacity">
-          <span>Opacity</span>
-          <span id="map-tiles-opacity-value">85%</span>
-        </label>
-        <input type="range" id="map-tiles-opacity" min="0" max="100" value="85" aria-label="Map tiles opacity">
+      <div class="tiles-control-content">
+        <div class="tiles-toggle-row">
+          <span class="tiles-toggle-label">Auda tiles</span>
+          <input type="checkbox" id="map-tiles-toggle" aria-label="Toggle auda map tiles">
+        </div>
+        <div id="map-tiles-opacity-wrap" class="hidden">
+          <label for="map-tiles-opacity">
+            <span>Opacity</span>
+            <span id="map-tiles-opacity-value">85%</span>
+          </label>
+          <input type="range" id="map-tiles-opacity" min="0" max="100" value="85" aria-label="Map tiles opacity">
+        </div>
       </div>
     </div>
   </div>
@@ -1243,71 +994,6 @@
     <div class="list-popup-content">
       <div id="property-list-content"></div>
       <div id="property-list-spacer" aria-hidden="true"></div>
-    </div>
-  </div>
-  
-  <div id="village-page">
-    <div id="village-header">
-      <h2>Village Maps</h2>
-      <button id="village-close-btn" onclick="closeVillageMaps()">Close</button>
-    </div>
-    <div id="village-list">
-      <div class="village-item" onclick="loadVillageMap('andej_sanand1')">Andej Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('aniyari_sanand1')">Aniyari Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('bakrana_sanand')">Bakrana Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('bhavanpura_sanand')">Bhavanpura Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('bol_sanand')">Bol Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('chandrasan_kadi')">Chandrasan Kadi</div>
-      <div class="village-item" onclick="loadVillageMap('charal_sanand')">Charal Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('chekhla_sanand')">Chekhla Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('chharodi_sanand')">Chharodi Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('daduka_sanand')">Daduka Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('daran_sanand')">Daran Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('dodar_sanand')">Dodar Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('fangdi_sanand')">Fangdi Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('godhavi_sanand')">Godhavi Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('goraj_sanand')">Goraj Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('iyava_sanand')">Iyava Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('jakhwada_viramgam')">Jakhwada Viramgam</div>
-      <div class="village-item" onclick="loadVillageMap('kalana_sanand')">Kalana Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('kaneti_sanand')">Kaneti Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('khicha_sanand')">Khicha Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('khoda_sanand')">Khoda Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('khoraj_sanand')">Khoraj Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('kolat_sanand')">Kolat Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('kundal_sanand')">Kundal Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('kunvar_sanand')">Kunvar Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('lekhamaba_sanand')">Lekhamaba Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('makhiyav_melasana')">Makhiyav Melasana</div>
-      <div class="village-item" onclick="loadVillageMap('mankol_sanand')">Mankol Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('modasar_sanand')">Modasar Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('moti_devti_sanand')">Moti Devti Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('naranpura_sanand')">Naranpura Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('palwada_sanand')">Palwada Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('pipan_sanand')">Pipan Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('rampura_sanand')">Rampura Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('rethal_sanand')">Rethal Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('rupavati_vasodara_sanand')">Rupavati Vasodara Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('sanand_rural')">Sanand Rural</div>
-      <div class="village-item" onclick="loadVillageMap('shiyavada_sanand')">Shiyavada Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('soyia_sanand_sanand')">Soyia Sanand Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('upardal_sanand')">Upardal Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('vasna_iyava_sanand')">Vasna Iyava Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('vasodara_sanand')">Vasodara Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('vinchhiya_sanand')">Vinchhiya Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('virochannagar_sanand')">Virochannagar Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('yashvantpura_sanand')">Yashvantpura Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('zamp_sanand')">Zamp Sanand</div>
-      <div class="village-item" onclick="loadVillageMap('zolapur_sanand')">Zolapur Sanand</div>
-    </div>
-
-    <div id="village-viewer">
-      <button id="viewer-back-btn" class="back-button" onclick="closeImageViewer()">← Back</button>
-      <div id="viewer-loading" class="fullscreen-loading">
-        <div class="spinner"></div>
-        <div>45GRIDS Loading Map...</div>
-      </div>
-      <div id="openseadragon-viewer"></div>
     </div>
   </div>
   
@@ -1327,12 +1013,6 @@
   let videoPlayCount = 0;
   let geoJsonData = null;
   let isZoomingToProperty = false;
-  
-  // OpenSeadragon viewer instance
-  let viewer = null;
-  
-  // Image base URL (village map JPGs / PDFs)
-  const IMAGE_BASE_URL = 'https://pub-5d90dd0566d24c3d8412287f05e273da.r2.dev';
 
   // Cloudflare R2 public URL for the "mptiles" bucket
   const MAP_TILES_BASE_URL = 'https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev';
@@ -1724,6 +1404,20 @@
       if (opacityValue) opacityValue.textContent = Math.round(mapTilesOpacity * 100) + '%';
     }
 
+    function toggleRevenueMode() {
+      const control = document.getElementById('map-tiles-control');
+      if (control) {
+        control.classList.toggle('collapsed');
+      }
+    }
+
+    function autoCollapseRevenueMode() {
+      const control = document.getElementById('map-tiles-control');
+      if (control && !control.classList.contains('collapsed')) {
+        control.classList.add('collapsed');
+      }
+    }
+
     function initMapTilesControls() {
       syncMapTilesControlUI();
 
@@ -1733,12 +1427,16 @@
       if (toggle) {
         toggle.addEventListener('change', function () {
           setMapTilesEnabled(toggle.checked);
+          setTimeout(autoCollapseRevenueMode, 500);
         });
       }
 
       if (opacityInput) {
         opacityInput.addEventListener('input', function () {
           setMapTilesOpacity(parseInt(opacityInput.value, 10) / 100);
+        });
+        opacityInput.addEventListener('change', function () {
+          setTimeout(autoCollapseRevenueMode, 500);
         });
       }
     }
@@ -1761,39 +1459,84 @@
         map.once('load', () => clearTimeout(watchdog));
       });
 
-      // Click to open location in Google Maps
+      // Long-press to pin location in Google Maps (prevents mistouch)
       let googleMapsMarker = null;
-      map.on('click', function(e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
+      let pressTimer = null;
+      let pressStartLatLng = null;
+      const PRESS_DURATION = 350; // ms to trigger pin
 
-        // Remove existing marker
-        if (googleMapsMarker) {
-          map.removeLayer(googleMapsMarker);
+      function handlePressStart(e) {
+        // Only start timer if not clicking on existing marker/popup
+        if (e.originalEvent.target.closest('.leaflet-popup') || 
+            e.originalEvent.target.closest('.leaflet-marker-icon')) {
+          return;
         }
 
-        // Add marker at clicked location
-        googleMapsMarker = L.marker(e.latlng).addTo(map);
+        pressStartLatLng = e.latlng;
+        pressTimer = setTimeout(() => {
+          if (pressStartLatLng) {
+            const lat = pressStartLatLng.lat;
+            const lng = pressStartLatLng.lng;
 
-        // Create popup with Google Maps link
-        const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-        const popupContent = `
-          <div style="text-align: center; padding: 5px;">
-            <div style="font-weight: 600; margin-bottom: 8px;">Location</div>
-            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
-              ${lat.toFixed(6)}, ${lng.toFixed(6)}
-            </div>
-            <a href="${googleMapsUrl}" target="_blank" 
-               style="display: inline-block; background: #4285f4; color: white; 
-                      padding: 8px 16px; border-radius: 4px; text-decoration: none; 
-                      font-size: 13px; font-weight: 500;">
-              Open in Google Maps
-            </a>
-          </div>
-        `;
+            // Remove existing marker
+            if (googleMapsMarker) {
+              map.removeLayer(googleMapsMarker);
+            }
 
-        googleMapsMarker.bindPopup(popupContent).openPopup();
-      });
+            // Add marker at pressed location
+            googleMapsMarker = L.marker(pressStartLatLng).addTo(map);
+
+            // Create popup with Google Maps link
+            const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+            const popupContent = `
+              <div style="text-align: center; padding: 5px;">
+                <div style="font-weight: 600; margin-bottom: 8px;">Location</div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                  ${lat.toFixed(6)}, ${lng.toFixed(6)}
+                </div>
+                <a href="${googleMapsUrl}" target="_blank" 
+                   style="display: inline-block; background: #4285f4; color: white; 
+                          padding: 8px 16px; border-radius: 4px; text-decoration: none; 
+                          font-size: 13px; font-weight: 500;">
+                  Open in Google Maps
+                </a>
+              </div>
+            `;
+
+            googleMapsMarker.bindPopup(popupContent).openPopup();
+          }
+          pressTimer = null;
+          pressStartLatLng = null;
+        }, PRESS_DURATION);
+      }
+
+      function handlePressEnd() {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+        pressStartLatLng = null;
+      }
+
+      function handlePressMove(e) {
+        // Cancel if moved significantly (more than 10 pixels)
+        if (pressStartLatLng && pressTimer) {
+          const distance = map.distance(pressStartLatLng, e.latlng);
+          if (distance > 10) {
+            handlePressEnd();
+          }
+        }
+      }
+
+      // Mouse events
+      map.on('mousedown', handlePressStart);
+      map.on('mouseup', handlePressEnd);
+      map.on('mousemove', handlePressMove);
+
+      // Touch events
+      map.on('touchstart', handlePressStart);
+      map.on('touchend', handlePressEnd);
+      map.on('touchmove', handlePressMove);
 
       // Create a top pane for labels so they render above the satellite imagery
       map.createPane('labels');
@@ -2223,228 +1966,7 @@
       document.addEventListener('click', function(e){ const b = e.target.closest('.view-on-map-btn'); if (b) zoomToProperty(parseInt(b.dataset.index)); });
       // Recover map layout after app resumes from background
       document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && map) { try { map.invalidateSize(); } catch(e) {} } });
-
-      // Village Maps button event listener
-      const villageMapsBtn = document.getElementById('village-maps-btn');
-      if (villageMapsBtn) {
-        villageMapsBtn.addEventListener('click', openVillageMaps);
-      }
-      
-      // Disable right-click on image viewer
-      document.addEventListener('contextmenu', function(e) {
-        const viewer = document.getElementById('openseadragon-viewer');
-        if (viewer && viewer.style.display !== 'none' && viewer.contains(e.target)) {
-          e.preventDefault();
-          return false;
-        }
-      });
-
-      // Disable keyboard shortcuts for image viewer
-      document.addEventListener('keydown', function(e) {
-        const viewerOverlay = document.getElementById('image-viewer-fullscreen');
-        if (viewerOverlay && viewerOverlay.classList.contains('active')) {
-          // Block Ctrl+S, Ctrl+P, Print Screen, etc.
-          if ((e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'a')) || e.key === 'PrintScreen') {
-            e.preventDefault();
-            return false;
-          }
-        }
-      });
     });
-
-    // === Village Maps Functions ===
-
-    function openVillageMaps() {
-      const villagePage = document.getElementById('village-page');
-      if (villagePage) {
-        villagePage.classList.add('active');
-      }
-      document.body.style.overflow = 'hidden';
-      closeImageViewer();
-    }
-
-    function closeVillageMaps() {
-      const villagePage = document.getElementById('village-page');
-      if (villagePage) {
-        villagePage.classList.remove('active');
-      }
-      document.body.style.overflow = '';
-      closeImageViewer();
-    }
-
-    function closeImageViewer() {
-      const viewer = document.getElementById('village-viewer');
-      if (viewer) {
-        viewer.classList.add('closing');
-      }
-
-      const hideViewer = () => {
-        if (viewer) {
-          viewer.classList.remove('active');
-          viewer.classList.remove('closing');
-        }
-        const list = document.getElementById('village-list');
-        if (list) {
-          list.classList.remove('hidden');
-        }
-        const loading = document.getElementById('viewer-loading');
-        if (loading) {
-          loading.classList.remove('active');
-        }
-        if (window.viewer) {
-          window.viewer.destroy();
-          window.viewer = null;
-        }
-        const viewerContent = document.getElementById('openseadragon-viewer');
-        if (viewerContent) {
-          viewerContent.innerHTML = '';
-          viewerContent.classList.remove('opened');
-        }
-        setMapInteractionEnabled(true);
-      };
-
-      setTimeout(hideViewer, 320);
-    }
-
-    function getVillageImageUrl(villageName) {
-      return `${IMAGE_BASE_URL}/${villageName}.jpg`;
-    }
-
-    function loadVillageMap(villageName) {
-      const isMobile = window.innerWidth <= 768 || /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
-      let selectedImageUrl = getVillageImageUrl(villageName);
-      const fallbackUrl = `${IMAGE_BASE_URL}/${villageName}_mobile.jpg`;
-      let attemptedFallback = false;
-
-      const villageViewer = document.getElementById('village-viewer');
-      if (villageViewer) {
-        villageViewer.classList.add('active');
-      }
-      const list = document.getElementById('village-list');
-      if (list) {
-        list.classList.add('hidden');
-      }
-
-      const loading = document.getElementById('viewer-loading');
-      if (loading) {
-        loading.classList.add('active');
-      }
-
-      setMapInteractionEnabled(false);
-
-      if (window.viewer) {
-        window.viewer.destroy();
-        window.viewer = null;
-      }
-
-      window.viewer = OpenSeadragon({
-        id: 'openseadragon-viewer',
-        prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
-        tileSources: {
-          type: 'image',
-          url: selectedImageUrl
-        },
-        showNavigationControl: true,
-        showNavigator: true,
-        navigatorSizeRatio: isMobile ? 0.12 : 0.20,
-        maxZoomPixelRatio: 1.2,
-        zoomPerScroll: 1.1,
-        zoomPerPinch: 1.2,
-        constrainDuringPan: true,
-        minZoomLevel: 1,
-        visibilityRatio: 1,
-        springStiffness: 6,
-        animationTime: 0.8,
-        blendTime: 0.1,
-        flickEnabled: true,
-        flickMinSpeed: 20,
-        flickMomentum: 0.9,
-        defaultZoomLevel: 1,
-        showRotationControl: false,
-        autoHideControls: true,
-        preserveViewport: true,
-        useCanvas: true,
-        gestureSettingsMouse: {
-          scrollToZoom: true,
-          clickToZoom: false,
-          dblClickToZoom: true,
-          pinchToZoom: true,
-          flickEnabled: true
-        },
-        gestureSettingsTouch: {
-          scrollToZoom: true,
-          clickToZoom: false,
-          dblClickToZoom: true,
-          pinchToZoom: true,
-          flickEnabled: true,
-          pinchRotate: false
-        }
-      });
-
-      const osdContainer = document.getElementById('openseadragon-viewer');
-      if (osdContainer) {
-        osdContainer.classList.remove('opened');
-      }
-
-      window.viewer.addOnceHandler('tile-drawn', function() {
-        const loading = document.getElementById('viewer-loading');
-        if (loading) {
-          loading.classList.remove('active');
-        }
-        if (osdContainer) {
-          osdContainer.classList.add('opened');
-        }
-      });
-
-      window.viewer.addHandler('canvas-double-click', function(event) {
-        const vp = window.viewer.viewport;
-        const currentZoom = vp.getZoom();
-        const targetZoom = Math.min(vp.getMaxZoom(), currentZoom * 1.8);
-        const point = event.position || vp.getCenter();
-        vp.zoomTo(targetZoom, point, true);
-        return false;
-      });
-
-      window.viewer.addHandler('canvas-press', function() {
-        if (osdContainer) osdContainer.classList.add('dragging');
-      });
-      window.viewer.addHandler('canvas-release', function() {
-        if (osdContainer) osdContainer.classList.remove('dragging');
-      });
-      window.viewer.addHandler('canvas-exit', function() {
-        if (osdContainer) osdContainer.classList.remove('dragging');
-      });
-
-      window.viewer.addHandler('canvas-error', function(error) {
-        if (!attemptedFallback && selectedImageUrl !== fallbackUrl) {
-          attemptedFallback = true;
-          selectedImageUrl = fallbackUrl;
-          window.viewer.open({ type: 'image', url: selectedImageUrl });
-          return;
-        }
-
-        const loading = document.getElementById('viewer-loading');
-        if (loading) {
-          loading.classList.remove('active');
-        }
-        const viewerContent = document.getElementById('openseadragon-viewer');
-        if (viewerContent) {
-          viewerContent.innerHTML = '<div style="color:white; text-align:center; padding:20px;display:flex;align-items:center;justify-content:center;height:100%;">Error loading map. Please try again.</div>';
-        }
-      });
-    }
-
-    function setMapInteractionEnabled(enabled) {
-      if (!map) return;
-      const fn = enabled ? 'enable' : 'disable';
-      try { map.dragging[fn](); } catch(_) {}
-      try { map.touchZoom[fn](); } catch(_) {}
-      try { map.scrollWheelZoom[fn](); } catch(_) {}
-      try { map.doubleClickZoom[fn](); } catch(_) {}
-      try { map.boxZoom[fn](); } catch(_) {}
-      try { map.keyboard[fn](); } catch(_) {}
-      try { if (enabled) map.tap.enable(); else map.tap.disable(); } catch(_) {}
-    }
 
   </script>
   <script>
