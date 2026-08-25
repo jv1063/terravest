@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   "/main.js",
   "/icons/icon-192.png",
   // Project-specific entries to ensure map works when directly opened
-  "./map.html",
+  "./index.html",
   "./manifest.json",
 ];
 

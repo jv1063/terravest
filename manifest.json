@@ -1,9 +1,9 @@
 {
-  "id": "/45GRIDS/map.html",
+  "id": "/45GRIDS/index.html",
   "name": "45GRIDS",
   "short_name": "45GRIDS",
   "description": "Secure Property Dashboard for managing and visualizing land and plot data with satellite map",
-  "start_url": "./map.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",

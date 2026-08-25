@@ -25,7 +25,7 @@ Upload these files to your GitHub repository:
 
 ```
 your-repo/
-├── map.html                    # Your main website
+├── index.html                  # Your main website
 ├── data/
 │   └── properties.geojson      # Property data
 ├── assets/                     # Your existing assets folder
@@ -96,7 +96,7 @@ The `update-geojson.html` file provides:
 1. **You update** `data/properties.geojson` in GitHub
 2. **GitHub Actions** automatically runs
 3. **The workflow** validates your GeoJSON
-4. **Updates** the embedded data in `map.html`
+4. **Updates** the embedded data in `index.html`
 5. **Updates** the version number for cache busting
 6. **Deploys** everything to GitHub Pages
 7. **Your website** is updated automatically!

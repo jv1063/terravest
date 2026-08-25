@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'data/properties.geojson'
-      - 'map.html'
+      - 'index.html'
       - '.github/workflows/update-geojson.yml'
   workflow_dispatch: # Allow manual trigger
 
@@ -49,19 +49,19 @@ jobs:
 
       - name: Verify external GeoJSON loading
         run: |
-          echo "Verifying that map.html loads GeoJSON from external file..."
+          echo "Verifying that index.html loads GeoJSON from external file..."
           node -e "
             const fs = require('fs');
-            const htmlContent = fs.readFileSync('map.html', 'utf8');
+            const htmlContent = fs.readFileSync('index.html', 'utf8');
             if (htmlContent.includes('properties-embedded')) {
-              console.error('❌ Embedded GeoJSON data still present in map.html');
+              console.error('❌ Embedded GeoJSON data still present in index.html');
               process.exit(1);
             }
             if (!htmlContent.includes('data/properties.geojson')) {
-              console.error('❌ External GeoJSON loading not found in map.html');
+              console.error('❌ External GeoJSON loading not found in index.html');
               process.exit(1);
             }
-            console.log('✅ map.html correctly configured for external GeoJSON loading');
+            console.log('✅ index.html correctly configured for external GeoJSON loading');
           "
 
       - name: Upload artifact for Pages

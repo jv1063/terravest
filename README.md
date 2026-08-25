@@ -33,7 +33,7 @@ Your property map loads data directly from `data/properties.geojson` and updates
 
 ```
 project_369/
-├── map.html                    # Main website (password protected)
+├── index.html                  # Main website (password protected)
 ├── data/
 │   └── properties.geojson      # Property data (edit this file)
 ├── assets/                     # Images and videos

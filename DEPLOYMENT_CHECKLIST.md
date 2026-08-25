@@ -3,7 +3,7 @@
 ## ✅ Pre-Deployment Checklist
 
 ### Files Ready for Upload:
-- [x] `map.html` - Main website (password protected)
+- [x] `index.html` - Main website (password protected)
 - [x] `data/properties.geojson` - Property data (5 features)
 - [x] `assets/` folder - All images and videos
 - [x] `.github/workflows/update-geojson.yml` - Automation workflow
@@ -34,7 +34,7 @@
 Upload all files from your `project_369` folder:
 ```
 your-repo/
-├── map.html
+├── index.html
 ├── data/
 │   └── properties.geojson
 ├── assets/
@@ -65,7 +65,7 @@ your-repo/
 ## 🎯 Post-Deployment
 
 ### Your Website Will Be Available At:
-- `https://yourusername.github.io/your-repo/map.html`
+- `https://yourusername.github.io/your-repo/`
 - **Passcode**: `22121998`
 
 ### How to Update Properties:

@@ -7,8 +7,8 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Open map.html",
-            "file": "c:\\Users\\jayrajsinh\\OneDrive\\Documents\\GitHub\\terravest\\map.html"
+            "name": "Open index.html",
+            "file": "c:\\Users\\jayrajsinh\\OneDrive\\Documents\\GitHub\\terravest\\index.html"
         }
     ]
 }

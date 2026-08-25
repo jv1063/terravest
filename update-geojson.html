@@ -143,7 +143,7 @@
                 <h3>To update your website:</h3>
                 <ol>
                     <li><strong>Update data/properties.geojson:</strong> Copy the generated GeoJSON content and paste it into your <code>data/properties.geojson</code> file in GitHub</li>
-                    <li><strong>Update map.html:</strong> Copy the generated HTML content and paste it into your <code>map.html</code> file in GitHub</li>
+                    <li><strong>Update index.html:</strong> Copy the generated HTML content and paste it into your <code>index.html</code> file in GitHub</li>
                     <li><strong>Commit changes:</strong> Commit and push your changes to GitHub</li>
                     <li><strong>Wait for deployment:</strong> GitHub Actions will automatically update your website</li>
                 </ol>
@@ -244,16 +244,16 @@ ${geoJSONContent}
                 </div>
 
                 <div class="section">
-                    <h3>📄 File 2: map.html (Embedded Script Section)</h3>
-                    <p>Find the embedded script section in your <code>map.html</code> file and replace it with this content:</p>
+                    <h3>📄 File 2: index.html (Embedded Script Section)</h3>
+                    <p>Find the embedded script section in your <code>index.html</code> file and replace it with this content:</p>
                     <textarea readonly style="height: 200px;">${embeddedScript}</textarea>
                     <br>
                     <button class="copy-btn" onclick="copyToClipboard('embeddedScript')">📋 Copy Embedded Script</button>
                 </div>
 
                 <div class="section">
-                    <h3>📄 File 3: map.html (Version Update)</h3>
-                    <p>Find the line with <code>const GEOJSON_VERSION</code> in your <code>map.html</code> file and replace it with:</p>
+                    <h3>📄 File 3: index.html (Version Update)</h3>
+                    <p>Find the line with <code>const GEOJSON_VERSION</code> in your <code>index.html</code> file and replace it with:</p>
                     <textarea readonly style="height: 50px;">const GEOJSON_VERSION = '${version}';</textarea>
                     <br>
                     <button class="copy-btn" onclick="copyToClipboard('versionLine')">📋 Copy Version Line</button>
