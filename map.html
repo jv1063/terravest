@@ -424,25 +424,21 @@
   
   /* View toggle button - green style to match login */
   #list-view-btn {
+    display: none;
     position: absolute;
     top: 115px;
     right: 10px;
     z-index: 1000;
-    background: linear-gradient(180deg, #0a7a3b, #066533);
+    background: linear-gradient(135deg, #067a3b 0%, #198754 100%);
     color: white;
     border: none;
-    border-radius: 50px;
+    border-radius: 8px;
     padding: 12px 20px;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 8px 20px rgba(6, 122, 59, 0.4);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 120px;
-    max-width: 150px;
+    box-shadow: 0 4px 12px rgba(6, 122, 59, 0.4);
+    transition: all 0.2s ease;
     white-space: nowrap;
     box-sizing: border-box;
   }
@@ -595,16 +591,16 @@
   }
   
   .view-on-map-btn {
+    display: none;
     margin-top: 12px;
     padding: 10px 20px;
     background: linear-gradient(180deg, #0a7a3b, #066533);
-    color: #fff;
+    color: white;
     border: none;
-    border-radius: 8px;
-    cursor: pointer;
+    border-radius: 6px;
     font-size: 14px;
-    font-weight: 700;
-    transition: all 0.3s;
+    font-weight: 600;
+    cursor: pointer;
     box-shadow: 0 4px 12px rgba(6, 122, 59, 0.2);
   }
   
@@ -1463,13 +1459,27 @@
       let googleMapsMarker = null;
       let pressTimer = null;
       let pressStartLatLng = null;
+      let pressStartCoords = null;
       const PRESS_DURATION = 350; // ms to trigger pin
 
       function handlePressStart(e) {
         // Only start timer if not clicking on existing marker/popup
-        if (e.originalEvent.target.closest('.leaflet-popup') || 
+        if (e.originalEvent.target.closest('.leaflet-popup') ||
             e.originalEvent.target.closest('.leaflet-marker-icon')) {
           return;
+        }
+
+        // Get coordinates for both mouse and touch
+        if (e.originalEvent.touches && e.originalEvent.touches.length > 0) {
+          pressStartCoords = {
+            x: e.originalEvent.touches[0].clientX,
+            y: e.originalEvent.touches[0].clientY
+          };
+        } else {
+          pressStartCoords = {
+            x: e.originalEvent.clientX,
+            y: e.originalEvent.clientY
+          };
         }
 
         pressStartLatLng = e.latlng;
@@ -1494,9 +1504,9 @@
                 <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
                   ${lat.toFixed(6)}, ${lng.toFixed(6)}
                 </div>
-                <a href="${googleMapsUrl}" target="_blank" 
-                   style="display: inline-block; background: #4285f4; color: white; 
-                          padding: 8px 16px; border-radius: 4px; text-decoration: none; 
+                <a href="${googleMapsUrl}" target="_blank"
+                   style="display: inline-block; background: #4285f4; color: white;
+                          padding: 8px 16px; border-radius: 4px; text-decoration: none;
                           font-size: 13px; font-weight: 500;">
                   Open in Google Maps
                 </a>
@@ -1507,21 +1517,37 @@
           }
           pressTimer = null;
           pressStartLatLng = null;
+          pressStartCoords = null;
         }, PRESS_DURATION);
       }
 
-      function handlePressEnd() {
+      function handlePressEnd(e) {
         if (pressTimer) {
           clearTimeout(pressTimer);
           pressTimer = null;
         }
         pressStartLatLng = null;
+        pressStartCoords = null;
       }
 
       function handlePressMove(e) {
         // Cancel if moved significantly (more than 10 pixels)
-        if (pressStartLatLng && pressTimer) {
-          const distance = map.distance(pressStartLatLng, e.latlng);
+        if (pressStartCoords && pressTimer) {
+          let currentX, currentY;
+
+          if (e.originalEvent.touches && e.originalEvent.touches.length > 0) {
+            currentX = e.originalEvent.touches[0].clientX;
+            currentY = e.originalEvent.touches[0].clientY;
+          } else {
+            currentX = e.originalEvent.clientX;
+            currentY = e.originalEvent.clientY;
+          }
+
+          const distance = Math.sqrt(
+            Math.pow(currentX - pressStartCoords.x, 2) +
+            Math.pow(currentY - pressStartCoords.y, 2)
+          );
+
           if (distance > 10) {
             handlePressEnd();
           }
@@ -1533,10 +1559,20 @@
       map.on('mouseup', handlePressEnd);
       map.on('mousemove', handlePressMove);
 
-      // Touch events
-      map.on('touchstart', handlePressStart);
-      map.on('touchend', handlePressEnd);
-      map.on('touchmove', handlePressMove);
+      // Touch events with preventDefault to avoid interference with map panning
+      map.getContainer().addEventListener('touchstart', function(e) {
+        if (!e.target.closest('.leaflet-popup') && !e.target.closest('.leaflet-marker-icon')) {
+          handlePressStart({ originalEvent: e, latlng: map.mouseEventToLatLng(e.touches[0]) });
+        }
+      }, { passive: true });
+
+      map.getContainer().addEventListener('touchend', function(e) {
+        handlePressEnd(e);
+      }, { passive: true });
+
+      map.getContainer().addEventListener('touchmove', function(e) {
+        handlePressMove({ originalEvent: e });
+      }, { passive: true });
 
       // Create a top pane for labels so they render above the satellite imagery
       map.createPane('labels');
@@ -1548,29 +1584,31 @@
       map.createPane('geojson');
       map.getPane('geojson').style.zIndex = 600;
 
-      // Esri World Imagery base layer (satellite)
-      const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      // Google Satellite Map
+      const satellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: MAX_Z,
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; Google Maps'
       }).addTo(map);
 
-      // Esri reference/labels overlay (World Boundaries/Places or Reference Labels)
-      // We'll use the 'Reference' layer which contains place labels and boundaries.
-      const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      // Google Labels layer
+      const labels = L.tileLayer('https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', {
         maxZoom: MAX_Z,
         pane: 'labels',
-        attribution: 'Labels &copy; Esri'
+        attribution: '&copy; Google Maps'
       }).addTo(map);
 
       // PMTiles layer for auda.pmtiles from Cloudflare R2
       const pmtilesSource = new pmtiles.PMTiles("https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles");
 
       const pmtilesLayer = pmtiles.leafletRasterLayer(pmtilesSource, {
-        zIndex: 500,
-        opacity: mapTilesOpacity
+        zIndex: 500
       });
 
       pmtilesLayer.addTo(map);
+
+      // Set initial opacity for PMTiles layer
+      pmtilesLayer.setOpacity(mapTilesOpacity);
 
       // Store PMTiles layer for opacity control
       customTileGroup = pmtilesLayer;
