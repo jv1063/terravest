@@ -1007,7 +1007,7 @@
   let geojsonLayer;
   let autoFitOnLoad = true;
   let videoPlayCount = 0;
-  let geoJsonData = null;
+  let geoJsonData = { type: 'FeatureCollection', features: [] }; // Empty for now
   let isZoomingToProperty = false;
 
   // Cloudflare R2 public URL for the "mptiles" bucket
@@ -1441,7 +1441,7 @@
       // Limit zoom to avoid requesting missing tiles at high zoom levels
       const MIN_Z = 10;
       const MAX_Z = 19;
-      map = L.map('map', { minZoom: MIN_Z, maxZoom: MAX_Z }).setView([23.02, 72.30], 13);
+      map = L.map('map', { minZoom: MIN_Z, maxZoom: MAX_Z }).setView([23.0225, 72.5714], 11);
 
       // Loading watchdog: if tiles hang, force a redraw and moveend to keep UI responsive
       map.on('loading', () => {
@@ -1454,6 +1454,22 @@
         }, 10000);
         map.once('load', () => clearTimeout(watchdog));
       });
+
+      // Create custom panes to guarantee correct stacking order at all times:
+      // Bottom: Base Satellite | Middle: AUDA Survey Layer | Top: Place Labels
+      map.createPane('basePane');
+      map.getPane('basePane').style.zIndex = 200;
+
+      map.createPane('audaPane');
+      map.getPane('audaPane').style.zIndex = 400;
+
+      map.createPane('labelsPane');
+      map.getPane('labelsPane').style.zIndex = 600;
+      map.getPane('labelsPane').style.pointerEvents = 'none'; // Allows clicks to pass through labels to map/plots
+
+      // Create a pane for geojson overlays so they render above base but below labels
+      map.createPane('geojson');
+      map.getPane('geojson').style.zIndex = 500;
 
       // Long-press to pin location in Google Maps (prevents mistouch)
       let googleMapsMarker = null;
@@ -1574,35 +1590,58 @@
         handlePressMove({ originalEvent: e });
       }, { passive: true });
 
-      // Create a top pane for labels so they render above the satellite imagery
-      map.createPane('labels');
-      map.getPane('labels').style.zIndex = 650; // above overlay layers
-      // allow clicks to pass through label pane so it doesn't block interactions
-      map.getPane('labels').style.pointerEvents = 'none';
-
-      // Create a pane for geojson overlays so they render above base but below labels
-      map.createPane('geojson');
-      map.getPane('geojson').style.zIndex = 600;
-
-      // Google Satellite Map
-      const satellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      // Primary Basemap: Google Satellite
+      const googleSatellite = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
         maxZoom: MAX_Z,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        pane: 'basePane',
         attribution: '&copy; Google Maps'
-      }).addTo(map);
+      });
 
-      // Google Labels layer
-      const labels = L.tileLayer('https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', {
+      // Fallback Basemap: Esri World Imagery (Legal, Free, High Reliability)
+      const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: MAX_Z,
-        pane: 'labels',
+        pane: 'basePane',
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      });
+
+      // Top Layer: Google Labels (Roads & Village Names)
+      const googleLabels = L.tileLayer('https://mt{s}.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        maxZoom: MAX_Z,
+        pane: 'labelsPane',
         attribution: '&copy; Google Maps'
-      }).addTo(map);
+      });
+
+      // Add initial layers to map
+      googleSatellite.addTo(map);
+      googleLabels.addTo(map);
+
+      // Automatic Error Fallback (Google -> Esri)
+      let googleTileFailures = 0;
+      let hasFallenBack = false;
+
+      googleSatellite.on('tileerror', function (error) {
+        if (hasFallenBack) return;
+        googleTileFailures++;
+
+        // If 4 or more tiles fail in a single view session, swap to Esri
+        if (googleTileFailures >= 4) {
+          console.warn('Google Satellite tile limit/error detected. Switching to Esri Satellite.');
+          hasFallenBack = true;
+
+          if (map.hasLayer(googleSatellite)) {
+            map.removeLayer(googleSatellite);
+          }
+          map.addLayer(esriSatellite);
+        }
+      });
 
       // PMTiles layer for auda.pmtiles from Cloudflare R2
       const pmtilesSource = new pmtiles.PMTiles("https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles");
 
       const pmtilesLayer = pmtiles.leafletRasterLayer(pmtilesSource, {
-        zIndex: 500
+        pane: 'audaPane'
       });
 
       pmtilesLayer.addTo(map);
@@ -1624,6 +1663,19 @@
       initCustomMapTiles();
       initMapTilesControls();
 
+      // Manual Layer Control Switcher (Top Right)
+      const baseMaps = {
+        "Google Satellite": googleSatellite,
+        "Esri Satellite (Backup)": esriSatellite
+      };
+
+      const overlayMaps = {
+        "AUDA Survey Map": pmtilesLayer,
+        "Place & Road Labels": googleLabels
+      };
+
+      L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(map);
+
       // Add a small control for GeoJSON actions
       const infoControl = L.control({ position: 'topright' });
       infoControl.onAdd = function () {
@@ -1642,8 +1694,8 @@
         autoFitOnLoad = false;
       });
 
-      // Load GeoJSON on map initialization
-      loadGeoJSON();
+      // Load GeoJSON on map initialization (disabled for now - no properties yet)
+      // loadGeoJSON();
       // No automatic refresh - data updates weekly, not every minute
 
       // show a brief warning when zoom limit is reached
