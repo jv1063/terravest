@@ -9,14 +9,14 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   
-  <title> 45GRIDS </title>
+  <title>Ahmedabad West Revenue Maps | 45Grids</title>
   <!-- PWA manifest -->
   <link rel="manifest" href="./manifest.json">
-  
+
   <!-- PWA / App metadata -->
   <meta name="application-name" content="45GRIDS">
   <meta name="apple-mobile-web-app-title" content="45GRIDS">
-  <meta name="description" content="Secure Property Dashboard for managing and visualizing land and plot data with setellite map">
+  <meta name="description" content="Digital revenue maps and village map overlays for Ahmedabad West. Access accurate land survey data, property boundaries, and satellite imagery with 45Grids.">
 
   <!-- iOS PWA support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -420,6 +420,51 @@
     display: none;
     margin-top: 0;
     touch-action: none;
+  }
+
+  /* SEO Header - discreet and clean */
+  .seo-header {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+  }
+
+  .seo-header h1 {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a202c;
+  }
+
+  .seo-header p {
+    margin: 0;
+    font-size: 13px;
+    color: #4a5568;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 600px) {
+    .seo-header {
+      top: 5px;
+      left: 5px;
+      right: 5px;
+      max-width: none;
+      padding: 10px 12px;
+    }
+
+    .seo-header h1 {
+      font-size: 14px;
+    }
+
+    .seo-header p {
+      font-size: 12px;
+    }
   }
   
   /* View toggle button - green style to match login */
@@ -957,6 +1002,12 @@
   </div>
 
   <div id="map">
+    <!-- SEO Header Section -->
+    <header class="seo-header">
+      <h1>Ahmedabad West Revenue Maps</h1>
+      <p>Digital revenue maps and village map overlays for accurate land survey data and property boundaries in Ahmedabad West.</p>
+    </header>
+
     <button id="list-view-btn">📋 List View</button>
     <div id="map-tiles-control" class="collapsed">
       <div class="tiles-control-header" onclick="toggleRevenueMode()">
