@@ -417,7 +417,7 @@
   #map {
     height: 100dvh;
     width: 100vw;
-    display: none;
+    display: block;
     margin-top: 0;
     touch-action: none;
   }
@@ -959,46 +959,6 @@
   <!-- In-app splash (universal) -->
   <div id="app-splash" aria-hidden="true">
     <img src="assets/terravest_logo.png" alt="Terravest" />
-  </div>
-
-  <div id="login">
-    <!-- Video wrapper with background image -->
-    <div class="video-wrapper">
-      <video class="login-bg-video" autoplay muted loop playsinline webkit-playsinline preload="auto" poster="assets/background_video_image.png?v=7" disablePictureInPicture>
-        <source src="assets/background_video.mp4?v=7" type="video/mp4">
-        <!-- Fallback for browsers that don't support video -->
-      </video>
-    </div>
-    
-    <!-- Fallback background image if video fails -->
-    <div class="login-bg-fallback"></div>
-    
-    <!-- Dark overlay for better readability -->
-    <div class="login-overlay"></div>
-    
-    <div class="auth-container">
-      <div class="auth-card">
-        <div class="auth-media" aria-label="Brand logo">
-          <video id="brand-video" class="brand-video" muted playsinline webkit-playsinline preload="auto" poster="assets/terravest_logo.png?v=11" disablePictureInPicture>
-            <source src="assets/terravest_logo_video.mp4" type="video/mp4">
-          </video>
-          <h2 class="brand-title">45GRIDS</h2>
-          <p class="brand-sub">Secure property dashboard — sign in to continue</p>
-        </div>
-        <form class="auth-form" id="auth-form" aria-label="Login form" onsubmit="checkPasscode(event)">
-          <label for="passcode" class="sr-only">Passcode</label>
-          <div class="input-wrap">
-            <input type="password" id="passcode" placeholder="Enter passcode" autocomplete="current-password" aria-describedby="error">
-            <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:rgba(255,255,255,0.6);pointer-events:none">
-              <path d="M17 8V9H7V8a5 5 0 1 1 10 0Zm-8 0a3 3 0 1 1 6 0V9H9V8ZM6 11h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Zm6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
-            </svg>
-          </div>
-          <button id="login-btn" type="submit">Sign in</button>
-          <div id="error" role="status" aria-live="polite"></div>
-          <div class="auth-foot">Need help? Contact 917383727206</div>
-        </form>
-      </div>
-    </div>
   </div>
 
   <div id="map">
@@ -2089,10 +2049,11 @@
     
     // Event listeners
     document.addEventListener('DOMContentLoaded', function() {
-      // Lock page scroll while login is visible to prevent seeing content under it
-      document.body.style.overflow = 'hidden';
+      // Initialize map immediately (no login required)
+      initMap();
+
       const listViewBtn = document.getElementById('list-view-btn');
-      
+
       if (listViewBtn) {
         listViewBtn.addEventListener('click', openListView);
       }
