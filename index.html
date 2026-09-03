@@ -1605,8 +1605,16 @@
       // Log PMTiles loading status
       pmtilesSource.getHeader().then(header => {
         console.log('✅ PMTiles header loaded:', header);
+        console.log('PMTiles metadata:', {
+          name: header.name,
+          description: header.description,
+          minZoom: header.minZoom,
+          maxZoom: header.maxZoom,
+          tileType: header.tileType
+        });
       }).catch(err => {
         console.error('❌ PMTiles header error:', err);
+        console.error('PMTiles URL:', "https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles");
       });
 
       loadMapTilesPrefs();
