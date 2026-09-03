@@ -1586,6 +1586,8 @@
 
       const pmtilesLayer = pmtiles.leafletRasterLayer(pmtilesSource, {
         pane: 'audaPane',
+        minZoom: 10,
+        maxZoom: 19,
         maxNativeZoom: 18,
         keepBuffer: 2,
         updateInterval: 200,
