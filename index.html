@@ -1582,9 +1582,7 @@
       });
 
       // PMTiles layer for auda.pmtiles from Cloudflare R2 (optimized)
-      const pmtilesSource = new pmtiles.PMTiles("https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles", {
-        maxzoom: MAX_Z
-      });
+      const pmtilesSource = new pmtiles.PMTiles("https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles");
 
       const pmtilesLayer = pmtiles.leafletRasterLayer(pmtilesSource, {
         pane: 'audaPane',
