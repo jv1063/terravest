@@ -9,14 +9,15 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   
-  <title>Ahmedabad West Revenue Maps | 45Grids</title>
+  <title>Ahmedabad District & Sanand Taluka Revenue Maps | 45Grids</title>
   <!-- PWA manifest -->
   <link rel="manifest" href="./manifest.json">
 
   <!-- PWA / App metadata -->
   <meta name="application-name" content="45GRIDS">
   <meta name="apple-mobile-web-app-title" content="45GRIDS">
-  <meta name="description" content="Digital revenue maps and village map overlays for Ahmedabad West. Access accurate land survey data, property boundaries, and satellite imagery with 45Grids.">
+  <meta name="description" content="Access Ahmedabad District and Sanand Taluka revenue maps with accurate land records, village survey data, and property boundaries. Digital land survey maps for Gujarat with satellite imagery overlay.">
+  <meta name="keywords" content="Ahmedabad revenue maps, Sanand Taluka land records, Gujarat land survey, village maps, property boundaries, digital land records, revenue survey maps">
 
   <!-- iOS PWA support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -33,7 +34,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- PMTiles -->
-  <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+  <script src="https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js"></script>
   <!-- Remixicon for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css" crossorigin="">
   <style>
@@ -117,13 +118,13 @@
     }
 
     /* Video wrapper with background image */
-    .video-wrapper {
+    .login-bg-fallback {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: url('assets/background_video_image.png') center center / cover no-repeat;
+      background: linear-gradient(135deg, #071024 0%, #0f1724 100%);
       z-index: 0;
     }
 
@@ -754,143 +755,47 @@
       white-space: nowrap;
     }
 
-    /* Custom map tiles overlay controls - Revenue mode widget */
-    #map-tiles-control {
+    /* Vertical opacity slider for selected layers */
+    #map-tiles-opacity {
       position: absolute;
       top: 115px;
       left: 10px;
       z-index: 1000;
-      background: rgba(255, 255, 255, 0.92);
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-      min-width: 180px;
-      font-size: 13px;
-      color: #1f2937;
-      backdrop-filter: blur(6px);
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-
-    #map-tiles-control.collapsed {
-      min-width: auto;
-      width: auto;
-    }
-
-    #map-tiles-control .tiles-control-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      cursor: pointer;
-      user-select: none;
-      background: rgba(255, 255, 255, 0.92);
-    }
-
-    #map-tiles-control .tiles-control-header:hover {
-      background: rgba(255, 255, 255, 0.98);
-    }
-
-    #map-tiles-control .tiles-control-title {
-      font-weight: 700;
-      font-size: 13px;
-      color: #066533;
-    }
-
-    #map-tiles-control .tiles-control-toggle-icon {
-      font-size: 16px;
-      color: #066533;
-      transition: transform 0.3s ease;
-    }
-
-    #map-tiles-control.collapsed .tiles-control-toggle-icon {
+      width: 120px;
+      height: 8px;
       transform: rotate(-90deg);
-    }
-
-    #map-tiles-control .tiles-control-content {
-      padding: 0 14px 12px 14px;
-      max-height: 200px;
-      overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
-      opacity: 1;
-    }
-
-    #map-tiles-control.collapsed .tiles-control-content {
-      max-height: 0;
-      padding: 0 14px;
-      opacity: 0;
-    }
-
-    #map-tiles-control .tiles-toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    #map-tiles-control .tiles-toggle-label {
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    #map-tiles-toggle {
-      position: relative;
-      width: 44px;
-      height: 24px;
+      transform-origin: center;
+      margin: 40px 0;
+      -webkit-appearance: none;
       appearance: none;
-      background: #d1d5db;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 4px;
+      outline: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    #map-tiles-toggle::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 18px;
-      height: 18px;
-      background: #fff;
+    #map-tiles-opacity::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      transition: transform 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    }
-
-    #map-tiles-toggle:checked {
-      background: linear-gradient(180deg, #0a7a3b, #066533);
-    }
-
-    #map-tiles-toggle:checked::after {
-      transform: translateX(20px);
-    }
-
-    #map-tiles-opacity-wrap {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    #map-tiles-opacity-wrap.hidden {
-      display: none;
-    }
-
-    #map-tiles-opacity-wrap label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #374151;
-    }
-
-    #map-tiles-opacity {
-      width: 100%;
-      accent-color: #066533;
+      background: #066533;
       cursor: pointer;
+      box-shadow: 0 2px 6px rgba(6, 101, 51, 0.4);
+      border: 2px solid white;
     }
+
+    #map-tiles-opacity::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #066533;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(6, 101, 51, 0.4);
+    }
+
 
     /* Mobile button adjustments */
     @media (max-width: 480px) {
@@ -901,11 +806,37 @@
         font-size: 13px;
         width: 120px;
       }
-      #map-tiles-control {
+      #map-tiles-opacity {
         top: 80px;
         left: 5px;
-        min-width: 160px;
-        padding: 10px 12px;
+      }
+      .seo-header {
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        max-width: none;
+        padding: 8px 10px;
+      }
+      .seo-header h1 {
+        font-size: 13px;
+      }
+      .seo-header p {
+        font-size: 11px;
+      }
+    }
+
+    /* Tablet adjustments */
+    @media (min-width: 481px) and (max-width: 768px) {
+      #list-view-btn {
+        top: 100px;
+        right: 10px;
+      }
+      #map-tiles-opacity {
+        top: 100px;
+        left: 10px;
+      }
+      .seo-header {
+        max-width: 350px;
       }
     }
 
@@ -964,30 +895,14 @@
   <div id="map">
     <!-- SEO Header Section -->
     <header class="seo-header">
-      <h1>Ahmedabad West Revenue Maps</h1>
-      <p>Digital revenue maps and village map overlays for accurate land survey data and property boundaries in Ahmedabad West.</p>
+      <h1>Ahmedabad District & Sanand Taluka Revenue Maps</h1>
+      <p>Access accurate land records, village survey data, and property boundaries for Ahmedabad District and Sanand Taluka with digital revenue maps.</p>
     </header>
 
     <button id="list-view-btn">📋 List View</button>
-    <div id="map-tiles-control" class="collapsed">
-      <div class="tiles-control-header" onclick="toggleRevenueMode()">
-        <div class="tiles-control-title">Revenue mode</div>
-        <div class="tiles-control-toggle-icon">▼</div>
-      </div>
-      <div class="tiles-control-content">
-        <div class="tiles-toggle-row">
-          <span class="tiles-toggle-label">Auda tiles</span>
-          <input type="checkbox" id="map-tiles-toggle" aria-label="Toggle auda map tiles">
-        </div>
-        <div id="map-tiles-opacity-wrap" class="hidden">
-          <label for="map-tiles-opacity">
-            <span>Opacity</span>
-            <span id="map-tiles-opacity-value">85%</span>
-          </label>
-          <input type="range" id="map-tiles-opacity" min="0" max="100" value="85" aria-label="Map tiles opacity">
-        </div>
-      </div>
-    </div>
+
+    <!-- Vertical opacity slider for selected layers -->
+    <input type="range" id="map-tiles-opacity" min="0" max="100" value="85" orient="vertical" aria-label="Layer opacity" title="Adjust layer opacity">
   </div>
   
   <div id="property-list">
@@ -1400,50 +1315,45 @@
     }
 
     function syncMapTilesControlUI() {
-      const toggle = document.getElementById('map-tiles-toggle');
-      const opacityWrap = document.getElementById('map-tiles-opacity-wrap');
       const opacityInput = document.getElementById('map-tiles-opacity');
       const opacityValue = document.getElementById('map-tiles-opacity-value');
 
-      if (toggle) toggle.checked = mapTilesEnabled;
-      if (opacityWrap) opacityWrap.classList.toggle('hidden', !mapTilesEnabled);
       if (opacityInput) opacityInput.value = String(Math.round(mapTilesOpacity * 100));
       if (opacityValue) opacityValue.textContent = Math.round(mapTilesOpacity * 100) + '%';
-    }
-
-    function toggleRevenueMode() {
-      const control = document.getElementById('map-tiles-control');
-      if (control) {
-        control.classList.toggle('collapsed');
-      }
-    }
-
-    function autoCollapseRevenueMode() {
-      const control = document.getElementById('map-tiles-control');
-      if (control && !control.classList.contains('collapsed')) {
-        control.classList.add('collapsed');
-      }
     }
 
     function initMapTilesControls() {
       syncMapTilesControlUI();
 
-      const toggle = document.getElementById('map-tiles-toggle');
       const opacityInput = document.getElementById('map-tiles-opacity');
-
-      if (toggle) {
-        toggle.addEventListener('change', function () {
-          setMapTilesEnabled(toggle.checked);
-          setTimeout(autoCollapseRevenueMode, 500);
-        });
-      }
 
       if (opacityInput) {
         opacityInput.addEventListener('input', function () {
-          setMapTilesOpacity(parseInt(opacityInput.value, 10) / 100);
-        });
-        opacityInput.addEventListener('change', function () {
-          setTimeout(autoCollapseRevenueMode, 500);
+          const newOpacity = parseInt(opacityInput.value, 10) / 100;
+          mapTilesOpacity = newOpacity;
+
+          // Apply opacity to all active overlay layers
+          if (typeof activeOverlayLayers !== 'undefined') {
+            activeOverlayLayers.forEach(layer => {
+              if (layer.setOpacity) {
+                layer.setOpacity(newOpacity);
+              }
+            });
+          }
+
+          // Also apply to customTileGroup for backward compatibility
+          if (customTileGroup) {
+            if (customTileGroup.setOpacity) {
+              customTileGroup.setOpacity(newOpacity);
+            } else if (customTileGroup.eachLayer) {
+              customTileGroup.eachLayer(function (layer) {
+                if (layer.setOpacity) layer.setOpacity(newOpacity);
+              });
+            }
+          }
+
+          saveMapTilesPrefs();
+          syncMapTilesControlUI();
         });
       }
     }
@@ -1452,7 +1362,17 @@
       // Limit zoom to avoid requesting missing tiles at high zoom levels
       const MIN_Z = 10;
       const MAX_Z = 19;
-      map = L.map('map', { minZoom: MIN_Z, maxZoom: MAX_Z }).setView([23.0225, 72.5714], 11);
+      map = L.map('map', {
+        minZoom: MIN_Z,
+        maxZoom: MAX_Z,
+        zoomControl: false, // Will add custom positioned zoom control
+        preferCanvas: true, // Better performance for many markers
+        updateWhenIdle: true, // Only update map when not moving
+        updateWhenZooming: false // Don't update during zoom animation
+      }).setView([23.0225, 72.5714], 11);
+
+      // Add zoom control to top-right for better UX
+      L.control.zoom({ position: 'topright' }).addTo(map);
 
       // Loading watchdog: if tiles hang, force a redraw and moveend to keep UI responsive
       map.on('loading', () => {
@@ -1462,7 +1382,7 @@
             try { map.invalidateSize(); } catch(e) {}
             try { map.fire('moveend'); } catch(e) {}
           }
-        }, 10000);
+        }, 8000); // Reduced from 10000 for faster fallback
         map.once('load', () => clearTimeout(watchdog));
       });
 
@@ -1601,19 +1521,27 @@
         handlePressMove({ originalEvent: e });
       }, { passive: true });
 
-      // Primary Basemap: Google Satellite
+      // Primary Basemap: Google Satellite (optimized for performance)
       const googleSatellite = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         subdomains: ['0', '1', '2', '3'],
         maxZoom: MAX_Z,
         pane: 'basePane',
-        attribution: '&copy; Google Maps'
+        attribution: '&copy; Google Maps',
+        maxNativeZoom: 18, // Don't request tiles beyond native resolution
+        keepBuffer: 2, // Keep 2 extra rows/cols of tiles for smoother panning
+        updateInterval: 200, // Update tiles every 200ms max
+        updateWhenZooming: false // Don't update during zoom animation
       });
 
       // Fallback Basemap: Esri World Imagery (Legal, Free, High Reliability)
       const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: MAX_Z,
         pane: 'basePane',
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+        maxNativeZoom: 18,
+        keepBuffer: 2,
+        updateInterval: 200,
+        updateWhenZooming: false
       });
 
       // Top Layer: Google Labels (Roads & Village Names)
@@ -1621,7 +1549,11 @@
         subdomains: ['0', '1', '2', '3'],
         maxZoom: MAX_Z,
         pane: 'labelsPane',
-        attribution: '&copy; Google Maps'
+        attribution: '&copy; Google Maps',
+        maxNativeZoom: 18,
+        keepBuffer: 2,
+        updateInterval: 200,
+        updateWhenZooming: false
       });
 
       // Add initial layers to map
@@ -1648,11 +1580,17 @@
         }
       });
 
-      // PMTiles layer for auda.pmtiles from Cloudflare R2
-      const pmtilesSource = new pmtiles.PMTiles("https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles");
+      // PMTiles layer for auda.pmtiles from Cloudflare R2 (optimized)
+      const pmtilesSource = new pmtiles.PMTiles("https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles", {
+        maxzoom: MAX_Z
+      });
 
       const pmtilesLayer = pmtiles.leafletRasterLayer(pmtilesSource, {
-        pane: 'audaPane'
+        pane: 'audaPane',
+        maxNativeZoom: 18,
+        keepBuffer: 2,
+        updateInterval: 200,
+        updateWhenZooming: false
       });
 
       pmtilesLayer.addTo(map);
@@ -1685,7 +1623,29 @@
         "Place & Road Labels": googleLabels
       };
 
-      L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(map);
+      const layerControl = L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(map);
+
+      // Track active overlay layers for opacity control
+      let activeOverlayLayers = [pmtilesLayer, googleLabels];
+
+      // Listen for layer add/remove events to track active overlays
+      map.on('layeradd', function(e) {
+        if (overlayMaps[e.layer]) {
+          if (!activeOverlayLayers.includes(e.layer)) {
+            activeOverlayLayers.push(e.layer);
+          }
+          // Apply current opacity to newly added layer
+          if (e.layer.setOpacity) {
+            e.layer.setOpacity(mapTilesOpacity);
+          }
+        }
+      });
+
+      map.on('layerremove', function(e) {
+        if (overlayMaps[e.layer]) {
+          activeOverlayLayers = activeOverlayLayers.filter(layer => layer !== e.layer);
+        }
+      });
 
       // Add a small control for GeoJSON actions
       const infoControl = L.control({ position: 'topright' });
