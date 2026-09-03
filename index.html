@@ -1242,7 +1242,8 @@
         const raw = localStorage.getItem(MAP_TILES_STORAGE_KEY);
         if (!raw) return;
         const prefs = JSON.parse(raw);
-        if (typeof prefs.enabled === 'boolean') mapTilesEnabled = prefs.enabled;
+        // Always enable tiles since we removed the toggle
+        mapTilesEnabled = true;
         if (typeof prefs.opacity === 'number') mapTilesOpacity = Math.min(1, Math.max(0, prefs.opacity));
       } catch (e) {}
     }
