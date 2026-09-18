@@ -1390,12 +1390,15 @@
       });
 
       // Create custom panes to guarantee correct stacking order at all times:
-      // Bottom: Base Satellite | Middle: AUDA Survey Layer | Top: Place Labels
+      // Bottom: Base Satellite | Middle: AUDA Survey Layer | Middle: Sanand Village Layer | Top: Place Labels
       map.createPane('basePane');
       map.getPane('basePane').style.zIndex = 200;
 
       map.createPane('audaPane');
       map.getPane('audaPane').style.zIndex = 400;
+
+      map.createPane('sanandPane');
+      map.getPane('sanandPane').style.zIndex = 410;
 
       map.createPane('labelsPane');
       map.getPane('labelsPane').style.zIndex = 600;
@@ -1588,8 +1591,6 @@
 
       const pmtilesLayer = pmtiles.leafletRasterLayer(pmtilesSource, {
         pane: 'audaPane',
-        minZoom: 8,
-        maxZoom: 19,
         maxNativeZoom: 17,
         keepBuffer: 2,
         updateInterval: 200,
@@ -1601,16 +1602,16 @@
       // Set initial opacity for PMTiles layer
       pmtilesLayer.setOpacity(mapTilesOpacity);
 
-      console.log('🔍 PMTiles layer added to map with opacity:', mapTilesOpacity);
-      console.log('🔍 PMTiles layer pane:', 'audaPane (z-index: 400)');
+      console.log('🔍 AUDA PMTiles layer added to map with opacity:', mapTilesOpacity);
+      console.log('🔍 AUDA PMTiles layer pane:', 'audaPane (z-index: 400)');
 
       // Store PMTiles layer for opacity control
       customTileGroup = pmtilesLayer;
 
       // Log PMTiles loading status
       pmtilesSource.getHeader().then(header => {
-        console.log('✅ PMTiles header loaded:', header);
-        console.log('PMTiles metadata:', {
+        console.log('✅ AUDA PMTiles header loaded:', header);
+        console.log('AUDA PMTiles metadata:', {
           name: header.name,
           description: header.description,
           minZoom: header.minZoom,
@@ -1619,8 +1620,43 @@
           bounds: header.bounds
         });
       }).catch(err => {
-        console.error('❌ PMTiles header error:', err);
-        console.error('PMTiles URL:', "https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles");
+        console.error('❌ AUDA PMTiles header error:', err);
+        console.error('AUDA PMTiles URL:', "https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/auda.pmtiles");
+      });
+
+      // PMTiles layer for sanand_village.pmtiles from Cloudflare R2
+      const sanandPmtilesSource = new pmtiles.PMTiles("https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/sanand_village.pmtiles");
+
+      const sanandPmtilesLayer = pmtiles.leafletRasterLayer(sanandPmtilesSource, {
+        pane: 'sanandPane',
+        maxNativeZoom: 17,
+        keepBuffer: 2,
+        updateInterval: 200,
+        updateWhenZooming: false
+      });
+
+      sanandPmtilesLayer.addTo(map);
+
+      // Set initial opacity for Sanand PMTiles layer
+      sanandPmtilesLayer.setOpacity(mapTilesOpacity);
+
+      console.log('🔍 Sanand Village PMTiles layer added to map with opacity:', mapTilesOpacity);
+      console.log('🔍 Sanand Village PMTiles layer pane:', 'sanandPane (z-index: 410)');
+
+      // Log Sanand PMTiles loading status
+      sanandPmtilesSource.getHeader().then(header => {
+        console.log('✅ Sanand Village PMTiles header loaded:', header);
+        console.log('Sanand Village PMTiles metadata:', {
+          name: header.name,
+          description: header.description,
+          minZoom: header.minZoom,
+          maxZoom: header.maxZoom,
+          tileType: header.tileType,
+          bounds: header.bounds
+        });
+      }).catch(err => {
+        console.error('❌ Sanand Village PMTiles header error:', err);
+        console.error('Sanand Village PMTiles URL:', "https://pub-8ee9d77f45e545e8939ec53d6532f3bd.r2.dev/sanand_village.pmtiles");
       });
 
       loadMapTilesPrefs();
@@ -1635,13 +1671,14 @@
 
       const overlayMaps = {
         "AUDA Survey Map": pmtilesLayer,
+        "Sanand Village Map": sanandPmtilesLayer,
         "Place & Road Labels": googleLabels
       };
 
       const layerControl = L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(map);
 
       // Track active overlay layers for opacity control
-      let activeOverlayLayers = [pmtilesLayer, googleLabels];
+      let activeOverlayLayers = [pmtilesLayer, sanandPmtilesLayer, googleLabels];
 
       // Listen for layer add/remove events to track active overlays
       map.on('layeradd', function(e) {
