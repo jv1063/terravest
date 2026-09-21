@@ -1362,9 +1362,9 @@
     }
 
     function initMap() {
-      // Limit zoom to avoid requesting missing tiles at high zoom levels
+      // Match the current PMTiles export range and keep the starting view in the Sanand area.
       const MIN_Z = 10;
-      const MAX_Z = 19;
+      const MAX_Z = 17;
       map = L.map('map', {
         minZoom: MIN_Z,
         maxZoom: MAX_Z,
@@ -1372,7 +1372,7 @@
         preferCanvas: true, // Better performance for many markers
         updateWhenIdle: true, // Only update map when not moving
         updateWhenZooming: false // Don't update during zoom animation
-      }).setView([23.0225, 72.5714], 11);
+      }).setView([23.0225, 72.5714], 12);
 
       // Add zoom control to top-right for better UX
       L.control.zoom({ position: 'topright' }).addTo(map);
@@ -1591,10 +1591,14 @@
 
       const pmtilesLayer = pmtiles.leafletRasterLayer(pmtilesSource, {
         pane: 'audaPane',
+        minZoom: MIN_Z,
+        maxZoom: MAX_Z,
         maxNativeZoom: 17,
         keepBuffer: 2,
         updateInterval: 200,
-        updateWhenZooming: false
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        tileSize: 256
       });
 
       pmtilesLayer.addTo(map);
@@ -1629,10 +1633,14 @@
 
       const sanandPmtilesLayer = pmtiles.leafletRasterLayer(sanandPmtilesSource, {
         pane: 'sanandPane',
+        minZoom: MIN_Z,
+        maxZoom: MAX_Z,
         maxNativeZoom: 17,
         keepBuffer: 2,
         updateInterval: 200,
-        updateWhenZooming: false
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        tileSize: 256
       });
 
       sanandPmtilesLayer.addTo(map);

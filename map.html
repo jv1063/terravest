@@ -1414,14 +1414,27 @@
       // Esri World Imagery base layer (satellite)
       const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: MAX_Z,
+        minZoom: MIN_Z,
+        tileSize: 256,
+        detectRetina: true,
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        keepBuffer: 4,
+        reuseTiles: true,
+        crossOrigin: true,
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
       }).addTo(map);
 
       // Esri reference/labels overlay (World Boundaries/Places or Reference Labels)
       // We'll use the 'Reference' layer which contains place labels and boundaries.
       const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: MAX_Z,
+        maxZoom: 16,
+        minZoom: MIN_Z,
         pane: 'labels',
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        keepBuffer: 2,
+        opacity: 0.9,
         attribution: 'Labels &copy; Esri'
       }).addTo(map);
 
@@ -1575,7 +1588,7 @@
       
       // Determine base path for GitHub Pages compatibility
       const base = window.location.pathname.includes('/data/') ? '' : './';
-      const url = `${base}data/properties.geojson?v=${Date.now()}`;
+      const url = `${base}data/properties.geojson`;
       
       console.log('🔍 Debug info:');
       console.log('- Current pathname:', window.location.pathname);
@@ -1588,11 +1601,9 @@
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       fetch(url, { 
         method: 'GET',
-        cache: 'no-store',
+        cache: 'force-cache',
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+          'Cache-Control': 'max-age=300'
         },
         signal: controller.signal
       })
